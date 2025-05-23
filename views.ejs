@@ -1,0 +1,460 @@
+<!-- index.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        .btn:hover { background: #0056b3; }
+        h1 { color: #333; text-align: center; }
+        .info { background: #e7f3ff; padding: 20px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><%= title %></h1>
+        <div class="info">
+            <p><%= message %></p>
+            <p>Click the button below to start the key generation process.</p>
+        </div>
+        <div style="text-align: center;">
+            <a href="/checkpoint/1" class="btn">Start Getting Key</a>
+            <a href="/admin" class="btn" style="background: #28a745;">Admin Panel</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- checkpoint.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .progress { background: #e9ecef; height: 20px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
+        .progress-bar { background: #007bff; height: 100%; transition: width 0.3s ease; }
+        .btn { display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .btn:hover { background: #218838; }
+        h1 { color: #333; }
+        .info { background: #fff3cd; padding: 20px; border-radius: 5px; margin: 20px 0; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><%= title %></h1>
+        
+        <div class="progress">
+            <div class="progress-bar" style="width: <%= (stage / 3) * 100 %>%"></div>
+        </div>
+        
+        <div class="info">
+            <h3>Step <%= stage %> of 3</h3>
+            <p>Please complete the advertisement to proceed to the next step.</p>
+            <p>You will be redirected automatically after viewing the ad.</p>
+        </div>
+        
+        <a href="<%= nextUrl %>" class="btn" id="nextBtn">
+            <% if (stage < 3) { %>
+                Continue to Step <%= stage + 1 %>
+            <% } else { %>
+                Get Your Key
+            <% } %>
+        </a>
+        
+        <div id="adContainer" style="margin: 20px 0;"></div>
+    </div>
+
+    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
+    <script>
+        // Initialize Linkvertise
+        linkvertise('<%= linkvertiseId %>', {
+            whitelist: [],
+            blacklist: [""]
+        });
+        
+        // Handle completion
+        document.getElementById('nextBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Complete this checkpoint
+            fetch('/api/complete-checkpoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    stage: <%= stage %>,
+                    tokenId: '<%= tokenId %>'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '<%= nextUrl %>';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
+
+<!-- access.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .key-box { background: #d4edda; border: 2px solid #28a745; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .key-text { font-family: monospace; font-size: 18px; font-weight: bold; color: #155724; word-break: break-all; }
+        .btn { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        h1 { color: #28a745; }
+        .info { background: #e7f3ff; padding: 20px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 <%= title %></h1>
+        
+        <div class="key-box">
+            <h3>Your Roblox Key:</h3>
+            <div class="key-text" id="keyText"><%= key %></div>
+        </div>
+        
+        <button class="btn" onclick="copyKey()">Copy Key</button>
+        <a href="/" class="btn" style="background: #6c757d;">Get Another Key</a>
+        
+        <div class="info">
+            <p><strong>Key expires:</strong> <%= expiresAt.toLocaleString() %></p>
+            <p><strong>Instructions:</strong></p>
+            <ol style="text-align: left; max-width: 400px; margin: 0 auto;">
+                <li>Copy the key above</li>
+                <li>Open your Roblox script</li>
+                <li>Paste the key when prompted</li>
+                <li>Enjoy your script!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function copyKey() {
+            const keyText = document.getElementById('keyText').textContent;
+            navigator.clipboard.writeText(keyText).then(function() {
+                alert('Key copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = keyText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Key copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
+
+<!-- admin-login.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .btn { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        h1 { text-align: center; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><%= title %></h1>
+        
+        <% if (error) { %>
+            <div class="error"><%= error %></div>
+        <% } %>
+        
+        <form method="POST" action="/admin/login">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+</body>
+</html>
+
+<!-- admin-dashboard.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #007bff; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .alert { padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        h1, h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><%= title %></h1>
+            <div>
+                <a href="/admin/keys" class="btn">Manage Keys</a>
+                <a href="/admin/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+
+        <% if (typeof query !== 'undefined' && query.success) { %>
+            <div class="alert alert-success"><%= query.success %></div>
+        <% } %>
+        <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="alert alert-error"><%= query.error %></div>
+        <% } %>
+
+        <div class="card">
+            <h2>Statistics</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number"><%= totalKeys %></div>
+                    <div>Total Keys Generated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number"><%= activeKeys %></div>
+                    <div>Active Keys</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number"><%= totalKeys - activeKeys %></div>
+                    <div>Expired Keys</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>System Settings</h2>
+            <form method="POST" action="/admin/settings">
+                <div class="form-group">
+                    <label for="keyExpireHours">Key Expiration (Hours):</label>
+                    <input type="number" id="keyExpireHours" name="keyExpireHours" value="<%= settings.keyExpireHours || 24 %>" min="1" max="168">
+                </div>
+                
+                <h3>Linkvertise Configuration</h3>
+                <div class="form-group">
+                    <label for="linkvertiseId1">Checkpoint 1 - Linkvertise ID:</label>
+                    <input type="text" id="linkvertiseId1" name="linkvertiseId1" value="<%= settings.linkvertiseId1 || '572754' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="linkvertiseId2">Checkpoint 2 - Linkvertise ID:</label>
+                    <input type="text" id="linkvertiseId2" name="linkvertiseId2" value="<%= settings.linkvertiseId2 || '572754' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label for="linkvertiseId3">Checkpoint 3 - Linkvertise ID:</label>
+                    <input type="text" id="linkvertiseId3" name="linkvertiseId3" value="<%= settings.linkvertiseId3 || '572754' %>">
+                </div>
+                
+                <h3>Webhook Configuration</h3>
+                <div class="form-group">
+                    <label for="webhookUrl">Webhook URL:</label>
+                    <input type="url" id="webhookUrl" name="webhookUrl" value="<%= settings.webhookUrl || '' %>" placeholder="https://discord.com/api/webhooks/...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="webhookInterval">Webhook Interval (Minutes):</label>
+                    <input type="number" id="webhookInterval" name="webhookInterval" value="<%= settings.webhookInterval || 60 %>" min="5" max="1440">
+                </div>
+                
+                <button type="submit" class="btn btn-success">Save Settings</button>
+                <button type="button" class="btn" onclick="testWebhook()">Test Webhook</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function testWebhook() {
+            fetch('/admin/test-webhook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Webhook test successful!');
+                } else {
+                    alert('Webhook test failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error testing webhook');
+            });
+        }
+    </script>
+</body>
+</html>
+
+<!-- admin-keys.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .key-text { font-family: monospace; font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-expired { color: #dc3545; font-weight: bold; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><%= title %></h1>
+            <div>
+                <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+                <a href="/admin/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Recent Keys (Latest 100)</h2>
+            
+            <% if (keys.length === 0) { %>
+                <p>No keys found.</p>
+            <% } else { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>IP Address</th>
+                            <th>Created</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% keys.forEach(key => { %>
+                            <tr>
+                                <td class="key-text" title="<%= key.key %>"><%= key.key %></td>
+                                <td><%= key.ip %></td>
+                                <td><%= key.createdAt.toLocaleString() %></td>
+                                <td><%= key.expiresAt.toLocaleString() %></td>
+                                <td>
+                                    <% if (key.expiresAt > new Date()) { %>
+                                        <span class="status-active">Active</span>
+                                    <% } else { %>
+                                        <span class="status-expired">Expired</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger" onclick="deleteKey('<%= key._id %>')">Delete</button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        function deleteKey(keyId) {
+            if (confirm('Are you sure you want to delete this key?')) {
+                fetch('/admin/delete-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ keyId: keyId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to delete key');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting key');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

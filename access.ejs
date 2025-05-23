@@ -1,0 +1,62 @@
+<!-- access.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .key-box { background: #d4edda; border: 2px solid #28a745; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .key-text { font-family: monospace; font-size: 18px; font-weight: bold; color: #155724; word-break: break-all; }
+        .btn { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        h1 { color: #28a745; }
+        .info { background: #e7f3ff; padding: 20px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 <%= title %></h1>
+        
+        <div class="key-box">
+            <h3>Your Roblox Key:</h3>
+            <div class="key-text" id="keyText"><%= key %></div>
+        </div>
+        
+        <button class="btn" onclick="copyKey()">Copy Key</button>
+        <a href="/" class="btn" style="background: #6c757d;">Get Another Key</a>
+        
+        <div class="info">
+            <p><strong>Key expires:</strong> <%= expiresAt.toLocaleString() %></p>
+            <p><strong>Instructions:</strong></p>
+            <ol style="text-align: left; max-width: 400px; margin: 0 auto;">
+                <li>Copy the key above</li>
+                <li>Open your Roblox script</li>
+                <li>Paste the key when prompted</li>
+                <li>Enjoy your script!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function copyKey() {
+            const keyText = document.getElementById('keyText').textContent;
+            navigator.clipboard.writeText(keyText).then(function() {
+                alert('Key copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = keyText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Key copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
