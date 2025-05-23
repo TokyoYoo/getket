@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetKey System - Your Key</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .success-icon {
+            font-size: 5em;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        
+        .key-container {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .key-label {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .key-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            color: #333;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            word-break: break-all;
+            margin-bottom: 15px;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .copy-btn.copied {
+            background: #17a2b8;
+        }
+        
+        .expiry-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .usage-instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0c5460;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .usage-instructions h3 {
+            color: #0c5460;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .usage-instructions code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .countdown {
+            font-size: 1.5em;
+            color: #dc3545;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Congratulations!</h1>
+        <p style="color: #666; font-size: 1.2em; margin-bottom: 20px;">
+            You have successfully completed all checkpoints. Here's your access key:
+        </p>
+        
+        <div class="key-container">
+            <div class="key-label">Your Access Key:</div>
+            <div class="key-value" id="keyValue"><%= key %></div>
+            <button class="copy-btn" onclick="copyKey()">📋 Copy Key</button>
+        </div>
+        
+        <div class="expiry-info">
+            ⏰ <strong>Key Expires:</strong> <span id="expiryTime"><%= new Date(expiresAt).toLocaleString() %></span>
+            <div class="countdown" id="countdown"></div>
+        </div>
+        
+        <div class="usage-instructions">
+            <h3>🔧 How to Use This Key</h3>
+            <ol>
+                <li>Copy your key using the button above</li>
+                <li>Open your Roblox Lua script executor</li>
+                <li>Paste the key when prompted by the script</li>
+                <li>The script will validate your key automatically</li>
+            </ol>
+            <p style="margin-top: 15px;">
+                <strong>API Validation:</strong> Your script calls <code>/api/validate-key?key=YOUR_KEY</code> to verify access.
+            </p>
+        </div>
+        
+        <div class="footer">
+            🔐 Secure • 🔄 Auto-expires • 🛡️ Protected
+        </div>
+    </div>
+
+    <script>
+        // Copy key functionality
+        function copyKey() {
+            const keyValue = document.getElementById('keyValue').textContent;
+            const copyBtn = document.querySelector('.copy-btn');
+            
+            navigator.clipboard.writeText(keyValue).then(() => {
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Key';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = keyValue;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Key';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // Countdown timer
+        function updateCountdown() {
+            const expiryTime = new Date('<%= expiresAt %>').getTime();
+            const now = new Date().getTime();
+            const timeLeft = expiryTime - now;
+            
+            if (timeLeft > 0) {
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                document.getElementById('countdown').textContent = 
+                    `${hours}h ${minutes}m ${seconds}s remaining`;
+            } else {
+                document.getElementById('countdown').textContent = 'Key has expired';
+                document.getElementById('countdown').style.color = '#dc3545';
+            }
+        }
+        
+        // Update countdown every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        // Auto-copy key on page load (optional)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (confirm('Would you like to automatically copy your key to clipboard?')) {
+                    copyKey();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
