@@ -7,10 +7,17 @@ const bcrypt = require('bcryptjs');
 const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
-
+const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("✅ Connected to MongoDB"))
+.catch(err => console.error("❌ MongoDB connection failed:", err));
 // MongoDB connection
 let db;
 const client = new MongoClient(process.env.MONGODB_URI);
