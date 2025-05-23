@@ -3,238 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GetKey System - Your Key</title>
+    <title>Your Access Key</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
-        }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 600px;
-            width: 90%;
-        }
-        
-        .success-icon {
-            font-size: 5em;
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.2em;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
         }
         
         .key-container {
-            background: #f8f9fa;
-            border: 2px dashed #667eea;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
         
-        .key-label {
-            color: #666;
-            font-size: 1.1em;
-            margin-bottom: 10px;
+        .key-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00c851, #007e33);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 1.5rem;
+            animation: bounceIn 1s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .key-title {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 2rem;
         }
         
         .key-value {
+            background: #f8f9fa;
+            border: 2px dashed #28a745;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
             font-family: 'Courier New', monospace;
-            font-size: 1.2em;
-            color: #333;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #495057;
             word-break: break-all;
-            margin-bottom: 15px;
+            position: relative;
         }
         
         .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             background: #28a745;
-            color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
         
         .copy-btn:hover {
             background: #218838;
-            transform: translateY(-1px);
+            transform: scale(1.05);
         }
         
-        .copy-btn.copied {
-            background: #17a2b8;
-        }
-        
-        .expiry-info {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        
-        .usage-instructions {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            color: #0c5460;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
+        .key-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 2rem 0;
+            border-radius: 5px;
             text-align: left;
         }
         
-        .usage-instructions h3 {
-            color: #0c5460;
-            margin-bottom: 15px;
-            text-align: center;
+        .time-remaining {
+            color: #28a745;
+            font-weight: bold;
         }
         
-        .usage-instructions code {
-            background: rgba(0, 0, 0, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
+        .expiry-warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .api-usage {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .api-code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 1rem;
+            border-radius: 5px;
             font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .action-buttons {
+            margin-top: 2rem;
+        }
+        
+        .btn-custom {
+            margin: 0.5rem;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .countdown {
-            font-size: 1.5em;
+            font-size: 1.1rem;
             color: #dc3545;
             font-weight: bold;
-            margin: 10px 0;
+            margin-top: 1rem;
         }
         
-        .footer {
-            margin-top: 30px;
-            color: #888;
-            font-size: 0.9em;
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .shape:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .shape:nth-child(2) {
+            top: 20%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+        
+        .shape:nth-child(3) {
+            bottom: 10%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="success-icon">✅</div>
-        <h1>Congratulations!</h1>
-        <p style="color: #666; font-size: 1.2em; margin-bottom: 20px;">
-            You have successfully completed all checkpoints. Here's your access key:
-        </p>
-        
-        <div class="key-container">
-            <div class="key-label">Your Access Key:</div>
-            <div class="key-value" id="keyValue"><%= key %></div>
-            <button class="copy-btn" onclick="copyKey()">📋 Copy Key</button>
+    <div class="key-container">
+        <div class="floating-shapes">
+            <i class="fas fa-key shape" style="font-size: 2rem;"></i>
+            <i class="fas fa-shield-alt shape" style="font-size: 1.5rem;"></i>
+            <i class="fas fa-lock shape" style="font-size: 1.8rem;"></i>
         </div>
         
-        <div class="expiry-info">
-            ⏰ <strong>Key Expires:</strong> <span id="expiryTime"><%= new Date(expiresAt).toLocaleString() %></span>
-            <div class="countdown" id="countdown"></div>
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
         </div>
         
-        <div class="usage-instructions">
-            <h3>🔧 How to Use This Key</h3>
-            <ol>
-                <li>Copy your key using the button above</li>
-                <li>Open your Roblox Lua script executor</li>
-                <li>Paste the key when prompted by the script</li>
-                <li>The script will validate your key automatically</li>
-            </ol>
-            <p style="margin-top: 15px;">
-                <strong>API Validation:</strong> Your script calls <code>/api/validate-key?key=YOUR_KEY</code> to verify access.
-            </p>
+        <h1 class="key-title">🎉 Congratulations!</h1>
+        <p class="lead mb-4">You have successfully completed all checkpoints. Here is your access key:</p>
+        
+        <div class="key-value">
+            <button class="copy-btn" onclick="copyKey()" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+            </button>
+            <div id="keyValue"><%= key %></div>
         </div>
         
-        <div class="footer">
-            🔐 Secure • 🔄 Auto-expires • 🛡️ Protected
+        <div class="key-info">
+            <h5><i class="fas fa-info-circle"></i> Key Information</h5>
+            <ul class="list-unstyled mb-0">
+                <li><strong>Expires:</strong> <%= new Date(expiresAt).toLocaleString() %></li>
+                <li><strong>Time Remaining:</strong> 
+                    <span class="<%= timeRemaining > 6 ? 'time-remaining' : 'expiry-warning' %>">
+                        <%= timeRemaining %> hours
+                    </span>
+                </li>
+                <li><strong>Status:</strong> <span class="text-success">Active</span></li>
+            </ul>
+        </div>
+        
+        <div class="api-usage">
+            <h5><i class="fas fa-code"></i> API Usage</h5>
+            <p>Use this endpoint to validate your key:</p>
+            <div class="api-code">GET <%= `${req.protocol}://${req.get('host')}/api/validate-key?key=${key}` %></div>
+            <small class="text-muted">This API will return JSON with validation status</small>
+        </div>
+        
+        <div class="countdown" id="countdown"></div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-primary-custom btn-custom" onclick="testKey()">
+                <i class="fas fa-play"></i> Test Key
+            </button>
+            <button class="btn btn-outline-secondary btn-custom" onclick="refreshPage()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+        
+        <div class="mt-4">
+            <small class="text-muted">
+                <i class="fas fa-shield-alt"></i> Your key is unique and secure. Keep it safe!
+            </small>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Copy key functionality
+        const expiresAt = new Date('<%= expiresAt %>');
+        const keyValue = '<%= key %>';
+        
         function copyKey() {
-            const keyValue = document.getElementById('keyValue').textContent;
-            const copyBtn = document.querySelector('.copy-btn');
-            
-            navigator.clipboard.writeText(keyValue).then(() => {
-                copyBtn.textContent = '✅ Copied!';
-                copyBtn.classList.add('copied');
+            navigator.clipboard.writeText(keyValue).then(function() {
+                const btn = document.querySelector('.copy-btn');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.style.background = '#28a745';
                 
                 setTimeout(() => {
-                    copyBtn.textContent = '📋 Copy Key';
-                    copyBtn.classList.remove('copied');
+                    btn.innerHTML = originalHTML;
+                    btn.style.background = '#28a745';
                 }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = keyValue;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
                 
-                copyBtn.textContent = '✅ Copied!';
-                copyBtn.classList.add('copied');
-                
-                setTimeout(() => {
-                    copyBtn.textContent = '📋 Copy Key';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
+                showToast('Key copied to clipboard!', 'success');
+            }).catch(function(err) {
+                showToast('Failed to copy key', 'error');
             });
         }
         
-        // Countdown timer
-        function updateCountdown() {
-            const expiryTime = new Date('<%= expiresAt %>').getTime();
-            const now = new Date().getTime();
-            const timeLeft = expiryTime - now;
+        function testKey() {
+            const testUrl = `/api/validate-key?key=${keyValue}`;
             
-            if (timeLeft > 0) {
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
-                document.getElementById('countdown').textContent = 
-                    `${hours}h ${minutes}m ${seconds}s remaining`;
-            } else {
-                document.getElementById('countdown').textContent = 'Key has expired';
-                document.getElementById('countdown').style.color = '#dc3545';
+            fetch(testUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        showToast('✅ Key is valid and active!', 'success');
+                    } else {
+                        showToast('❌ Key is invalid or expired', 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('Error testing key', 'error');
+                });
+        }
+        
+        function refreshPage() {
+            window.location.reload();
+        }
+        
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; animation: slideIn 0.5s ease-out;';
+            toast.innerHTML = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = expiresAt - now;
+            
+            if (timeLeft <= 0) {
+                document.getElementById('countdown').innerHTML = '⚠️ Key has expired!';
+                return;
             }
+            
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            document.getElementById('countdown').innerHTML = 
+                `⏰ Expires in: ${hours}h ${minutes}m ${seconds}s`;
         }
         
         // Update countdown every second
-        updateCountdown();
         setInterval(updateCountdown, 1000);
+        updateCountdown();
         
-        // Auto-copy key on page load (optional)
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (confirm('Would you like to automatically copy your key to clipboard?')) {
-                    copyKey();
+        // Add CSS for slide animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
                 }
-            }, 1000);
-        });
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
