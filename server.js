@@ -117,6 +117,16 @@ async function updateTokenStage(tokenId, stage, keyId = null) {
     );
 }
 
+// Helper function to check if request is from Linkvertise
+function isFromLinkvertise(referrer) {
+    return referrer.includes('linkvertise.com') || 
+           referrer.includes('link-to.net') || 
+           referrer.includes('direct-link.net') ||
+           referrer.includes('linkvertise') ||
+           referrer.includes('lv-cdn.com') ||
+           referrer.includes('publisher.linkvertise.com');
+}
+
 // Routes
 
 // Home page
@@ -127,57 +137,38 @@ app.get('/', (req, res) => {
     });
 });
 
-// Checkpoint routes - FIXED VERSION
+// Main checkpoint route - แสดงหน้า checkpoint เท่านั้น (ไม่อัพเดท stage ที่นี่)
 app.get('/checkpoint/:stage', async (req, res) => {
     const stage = parseInt(req.params.stage);
     const ip = getClientIP(req);
     const referrer = req.get('Referrer') || req.get('Referer') || '';
     
+    // Validate stage range
     if (stage < 1 || stage > 3) {
         return res.redirect('/checkpoint/1');
     }
     
     try {
         const tokenId = await createOrGetToken(ip);
-        let tokenData = await getTokenData(tokenId);
+        const tokenData = await getTokenData(tokenId);
         const settings = await getSettings();
         
-        // Check if user came from Linkvertise with enhanced detection
-        const isFromLinkvertise = referrer.includes('linkvertise.com') || 
-                                  referrer.includes('link-to.net') || 
-                                  referrer.includes('direct-link.net') ||
-                                  referrer.includes('linkvertise') ||
-                                  referrer.includes('lv-cdn.com') ||
-                                  referrer.includes('publisher.linkvertise.com');
+        console.log(`Checkpoint ${stage} - IP: ${ip}, Current Stage: ${tokenData.stage}, Referrer: ${referrer}`);
         
-        console.log(`Stage ${stage} - IP: ${ip}, Current Stage: ${tokenData.stage}, From Linkvertise: ${isFromLinkvertise}, Referrer: ${referrer}`);
-        
-        // If coming from Linkvertise and completing the PREVIOUS stage (sequential)
-        if (isFromLinkvertise && tokenData.stage === stage - 1) {
-            console.log(`Completing stage ${stage} - updating from ${tokenData.stage} to ${stage}`);
-            await updateTokenStage(tokenId, stage);
-            tokenData = await getTokenData(tokenId); // Refresh token data
-            
-            // If completed stage 3, go to access page
-            if (stage >= 3) {
-                return res.redirect('/access');
-            }
-            
-            // Otherwise redirect to next checkpoint
-            return res.redirect(`/checkpoint/${stage + 1}`);
+        // If user already completed all stages, go to access
+        if (tokenData.stage >= 3) {
+            return res.redirect('/access');
         }
         
-        // If user already completed this stage, redirect accordingly
-        if (tokenData.stage >= stage) {
-            if (tokenData.stage >= 3) {
-                return res.redirect('/access');
-            } else {
-                return res.redirect(`/checkpoint/${tokenData.stage + 1}`);
-            }
-        }
-        
-        // Check if user can access this stage (must be sequential: current stage + 1)
+        // If user is trying to access a stage they haven't reached yet
         if (stage > tokenData.stage + 1) {
+            console.log(`User trying to skip to stage ${stage}, redirecting to stage ${tokenData.stage + 1}`);
+            return res.redirect(`/checkpoint/${tokenData.stage + 1}`);
+        }
+        
+        // If user already completed this stage, redirect to next
+        if (tokenData.stage >= stage) {
+            console.log(`User already completed stage ${stage}, redirecting to stage ${tokenData.stage + 1}`);
             return res.redirect(`/checkpoint/${tokenData.stage + 1}`);
         }
         
@@ -190,6 +181,7 @@ app.get('/checkpoint/:stage', async (req, res) => {
         // Create completion URL that will be used by Linkvertise
         const completionUrl = `${req.protocol}://${req.get('host')}/checkpoint/${stage}/complete`;
         
+        // แสดงหน้า checkpoint
         res.render('checkpoint', {
             title: `Checkpoint ${stage}`,
             stage: stage,
@@ -205,7 +197,7 @@ app.get('/checkpoint/:stage', async (req, res) => {
     }
 });
 
-// Completion route for Linkvertise returns - FIXED VERSION
+// Completion route for Linkvertise returns - ทำการอัพเดท stage ที่นี่
 app.get('/checkpoint/:stage/complete', async (req, res) => {
     const stage = parseInt(req.params.stage);
     const ip = getClientIP(req);
@@ -217,34 +209,62 @@ app.get('/checkpoint/:stage/complete', async (req, res) => {
         const tokenId = await createOrGetToken(ip);
         let tokenData = await getTokenData(tokenId);
         
-        // Enhanced Linkvertise detection
-        const isFromLinkvertise = referrer.includes('linkvertise.com') || 
-                                  referrer.includes('link-to.net') || 
-                                  referrer.includes('direct-link.net') ||
-                                  referrer.includes('linkvertise') ||
-                                  referrer.includes('lv-cdn.com') ||
-                                  referrer.includes('publisher.linkvertise.com') ||
-                                  req.query.completed === 'true'; // Fallback parameter
+        // Check if coming from Linkvertise
+        const isFromLinkvertiseCheck = isFromLinkvertise(referrer) || req.query.completed === 'true'; // Parameter สำรอง
         
-        console.log(`Current token stage: ${tokenData.stage}, Requested stage: ${stage}, From Linkvertise: ${isFromLinkvertise}`);
+        console.log(`Completion - Current stage: ${tokenData.stage}, Completing stage: ${stage}, From Linkvertise: ${isFromLinkvertiseCheck}`);
         
-        // Only update if user is completing the current stage (sequential progression)
-        if (isFromLinkvertise && tokenData.stage === stage - 1) {
-            console.log(`Updating stage from ${tokenData.stage} to ${stage}`);
+        // Update stage only when following sequence (current stage + 1) and from Linkvertise
+        if (isFromLinkvertiseCheck && tokenData.stage === stage - 1) {
+            console.log(`✅ Completing stage ${stage} - updating from ${tokenData.stage} to ${stage}`);
             await updateTokenStage(tokenId, stage);
             
-            // Add a small delay to ensure database update
+            // Wait a moment for database update
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Redirect based on completed stage
+            // แสดงหน้าสำเร็จก่อน แล้วค่อย redirect
             if (stage >= 3) {
+                // ถ้าจบ stage 3 แล้ว ไปหน้า access
+                console.log(`🎉 All stages completed! Redirecting to access page`);
                 return res.redirect('/access');
             } else {
-                return res.redirect(`/checkpoint/${stage + 1}`);
+                // ถ้ายังไม่จบ แสดงหน้าสำเร็จแล้วให้ไป stage ถัดไป
+                console.log(`✅ Stage ${stage} completed! Showing success page then redirect to stage ${stage + 1}`);
+                
+                // แสดงหน้าสำเร็จสักครู่ แล้วค่อย redirect
+                res.send(`
+                    <html>
+                    <head>
+                        <title>Stage ${stage} Completed!</title>
+                        <meta http-equiv="refresh" content="3;url=/checkpoint/${stage + 1}">
+                        <style>
+                            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                            .success { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; display: inline-block; }
+                            .loading { margin-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="success">
+                            <h1>✅ Stage ${stage} Completed!</h1>
+                            <p>Great job! You've successfully completed checkpoint ${stage}.</p>
+                            <p>Redirecting to Stage ${stage + 1} in 3 seconds...</p>
+                        </div>
+                        <div class="loading">
+                            <p>If you're not redirected automatically, <a href="/checkpoint/${stage + 1}">click here</a>.</p>
+                        </div>
+                        <script>
+                            setTimeout(function() {
+                                window.location.href = '/checkpoint/${stage + 1}';
+                            }, 3000);
+                        </script>
+                    </body>
+                    </html>
+                `);
+                return;
             }
         }
         
-        // If already completed this stage or higher, redirect appropriately
+        // If already completed this stage or higher
         if (tokenData.stage >= stage) {
             if (tokenData.stage >= 3) {
                 return res.redirect('/access');
@@ -253,13 +273,38 @@ app.get('/checkpoint/:stage/complete', async (req, res) => {
             }
         }
         
-        // If trying to skip stages, redirect to current stage + 1
+        // If trying to skip stages
         if (tokenData.stage < stage - 1) {
+            console.log(`❌ Invalid stage progression: trying stage ${stage} but current is ${tokenData.stage}`);
             return res.redirect(`/checkpoint/${tokenData.stage + 1}`);
         }
         
-        // If not from Linkvertise and hasn't completed, redirect back to checkpoint
-        return res.redirect(`/checkpoint/${stage}`);
+        // If not from Linkvertise, show error and redirect back
+        console.log(`❌ Not from Linkvertise or invalid completion`);
+        res.send(`
+            <html>
+            <head>
+                <title>Invalid Access</title>
+                <meta http-equiv="refresh" content="3;url=/checkpoint/${stage}">
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+                    .error { background: #f44336; color: white; padding: 20px; border-radius: 10px; display: inline-block; }
+                </style>
+            </head>
+            <body>
+                <div class="error">
+                    <h1>❌ Invalid Access</h1>
+                    <p>You must complete the Linkvertise link to proceed.</p>
+                    <p>Redirecting back to checkpoint ${stage}...</p>
+                </div>
+                <script>
+                    setTimeout(function() {
+                        window.location.href = '/checkpoint/${stage}';
+                    }, 3000);
+                </script>
+            </body>
+            </html>
+        `);
         
     } catch (error) {
         console.error('Checkpoint complete error:', error);
@@ -267,7 +312,7 @@ app.get('/checkpoint/:stage/complete', async (req, res) => {
     }
 });
 
-// API endpoint for manual completion - SINGLE VERSION ONLY
+// API endpoint for manual checkpoint completion - SEQUENTIAL ONLY
 app.post('/api/complete-checkpoint', async (req, res) => {
     const { stage, tokenId } = req.body;
     const referrer = req.get('Referrer') || req.get('Referer') || '';
@@ -283,31 +328,31 @@ app.post('/api/complete-checkpoint', async (req, res) => {
         
         const stageNum = parseInt(stage);
         
-        // Check if request is from Linkvertise
-        const isFromLinkvertise = referrer.includes('linkvertise.com') || 
-                                  referrer.includes('link-to.net') || 
-                                  referrer.includes('direct-link.net') ||
-                                  referrer.includes('linkvertise') ||
-                                  referrer.includes('lv-cdn.com');
+        // Check if coming from Linkvertise
+        const isFromLinkvertiseCheck = isFromLinkvertise(referrer);
         
-        // Only allow sequential progression: current stage + 1
+        // Allow stage change only in sequence: current stage + 1 only
         const isValidProgression = stageNum === tokenData.stage + 1;
         
-        if (isValidProgression && (isFromLinkvertise || tokenData.stage < stageNum)) {
-            // Update token stage to next stage only
+        if (isValidProgression && isFromLinkvertiseCheck) {
+            // Update stage to next stage
             await updateTokenStage(tokenId, stageNum);
             console.log(`Stage updated from ${tokenData.stage} to ${stageNum}`);
+            
+            const nextUrl = stageNum >= 3 ? '/access' : `/checkpoint/${stageNum + 1}`;
+            
             res.json({ 
                 success: true, 
                 newStage: stageNum,
-                nextUrl: stageNum >= 3 ? '/access' : `/checkpoint/${stageNum + 1}`
+                nextUrl: nextUrl
             });
         } else {
             res.json({ 
                 success: false, 
                 message: `Invalid stage progression. Current: ${tokenData.stage}, Requested: ${stageNum}`,
                 currentStage: tokenData.stage,
-                nextValidStage: tokenData.stage + 1
+                nextValidStage: tokenData.stage + 1,
+                reason: !isValidProgression ? 'Not sequential' : 'Not from Linkvertise'
             });
         }
         
@@ -317,7 +362,7 @@ app.post('/api/complete-checkpoint', async (req, res) => {
     }
 });
 
-// Access page - Get key
+// Access page - Fixed to ensure all 3 stages are completed
 app.get('/access', async (req, res) => {
     const ip = getClientIP(req);
     
@@ -327,12 +372,13 @@ app.get('/access', async (req, res) => {
         
         console.log(`Access page - IP: ${ip}, Current Stage: ${tokenData.stage}`);
         
-        // Check if user completed all checkpoints
+        // Check that all 3 stages are completed
         if (tokenData.stage < 3) {
-            return res.redirect('/checkpoint/1');
+            console.log(`Access denied - stage ${tokenData.stage} < 3, redirecting to checkpoint ${tokenData.stage + 1}`);
+            return res.redirect(`/checkpoint/${tokenData.stage + 1}`);
         }
         
-        // Check if user already has a valid key
+        // Check if there's an existing valid key
         if (tokenData.keyId) {
             const keysCollection = db.collection('keys');
             const existingKey = await keysCollection.findOne({ 
