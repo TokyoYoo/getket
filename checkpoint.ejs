@@ -120,7 +120,8 @@
         // Simple script - no complex logic needed
         // The Linkvertise script will handle redirects automatically
         // When user returns from Linkvertise, the server will detect and redirect appropriately
-        console.log('Checkpoint <%= stage %> loaded');
+        console.log('Current stage:', <%- currentStage %>);
+        console.log('Requested stage:', <%- stage %>);
     </script>
 </body>
 </html>
