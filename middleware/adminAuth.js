@@ -1,67 +1,65 @@
 const bcrypt = require('bcryptjs');
 
-// Simple admin authentication middleware
-// In production, use proper user management system
 const adminAuth = {
-    // Admin credentials (in production, store in database with proper hashing)
-    adminCredentials: {
-        username: process.env.ADMIN_USERNAME || 'admin',
-        password: process.env.ADMIN_PASSWORD || 'admin123' // Change this in production!
-    },
-
-    // Middleware to check if user is authenticated as admin
+    // Check if user is authenticated as admin
     requireAuth: (req, res, next) => {
-        if (!req.session.isAdmin) {
-            return res.redirect('/dashboard/login');
+        if (req.session.adminAuthenticated) {
+            return next();
         }
-        next();
+        
+        // Store the original URL to redirect after login
+        req.session.returnTo = req.originalUrl;
+        res.redirect('/dashboard/login');
     },
 
-    // Login page handler
-    loginPage: (req, res) => {
-        if (req.session.isAdmin) {
-            return res.redirect('/dashboard');
+    // Authenticate admin credentials
+    authenticate: async (req, res, next) => {
+        const { username, password } = req.body;
+        
+        if (!username || !password) {
+            return res.render('dashboard/login', { 
+                error: 'Username and password are required',
+                title: 'Admin Login'
+            });
         }
-        res.render('admin-login', { 
-            title: 'Admin Login',
-            error: req.query.error 
-        });
-    },
 
-    // Login handler
-    login: async (req, res) => {
+        // Simple authentication - in production, use proper user management
+        const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
         try {
-            const { username, password } = req.body;
-            
-            if (!username || !password) {
-                return res.redirect('/dashboard/login?error=missing_credentials');
-            }
-
-            // Simple credential check (in production, use proper authentication)
-            if (username === adminAuth.adminCredentials.username && 
-                password === adminAuth.adminCredentials.password) {
+            // For development - plain text comparison
+            // In production, hash the admin password and use bcrypt.compare
+            if (username === adminUsername && password === adminPassword) {
+                req.session.adminAuthenticated = true;
+                req.session.adminUsername = username;
                 
-                req.session.isAdmin = true;
-                req.session.adminLoginTime = new Date();
+                // Redirect to original URL or dashboard
+                const returnTo = req.session.returnTo || '/dashboard';
+                delete req.session.returnTo;
                 
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('Session save error:', err);
-                        return res.redirect('/dashboard/login?error=session_error');
-                    }
-                    res.redirect('/dashboard');
-                });
+                return res.redirect(returnTo);
             } else {
-                res.redirect('/dashboard/login?error=invalid_credentials');
+                return res.render('dashboard/login', { 
+                    error: 'Invalid username or password',
+                    title: 'Admin Login'
+                });
             }
         } catch (error) {
-            console.error('Login error:', error);
-            res.redirect('/dashboard/login?error=server_error');
+            console.error('Authentication error:', error);
+            return res.render('dashboard/login', { 
+                error: 'Authentication failed',
+                title: 'Admin Login'
+            });
         }
     },
 
-    // Logout handler
-    logout: (req, res) => {
+    // Logout admin
+    logout: (req, res, next) => {
+        req.session.adminAuthenticated = false;
+        delete req.session.adminUsername;
+        
+        // Optionally destroy the entire session
         req.session.destroy((err) => {
             if (err) {
                 console.error('Session destroy error:', err);
@@ -70,12 +68,30 @@ const adminAuth = {
         });
     },
 
-    // Check if current user is admin (for API endpoints)
-    isAdmin: (req, res, next) => {
-        if (!req.session.isAdmin) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+    // Check if admin is logged in (for conditional rendering)
+    checkAuth: (req, res, next) => {
+        res.locals.adminAuthenticated = req.session.adminAuthenticated || false;
+        res.locals.adminUsername = req.session.adminUsername || null;
         next();
+    },
+
+    // Generate hashed password (utility function for setup)
+    hashPassword: async (password) => {
+        try {
+            const saltRounds = 12;
+            return await bcrypt.hash(password, saltRounds);
+        } catch (error) {
+            throw new Error('Password hashing failed');
+        }
+    },
+
+    // Verify password against hash
+    verifyPassword: async (password, hash) => {
+        try {
+            return await bcrypt.compare(password, hash);
+        } catch (error) {
+            return false;
+        }
     }
 };
 

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Linkvertise API -->
+    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
+    <script>
+        linkvertise(57731, {
+            whitelist: [], 
+            blacklist: [""]
+        });
+    </script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-gradient">
+        <div class="card access-card shadow-lg">
+            <div class="card-header text-center bg-success text-white">
+                <h2 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    Access Key Generated
+                </h2>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Progress Bar (Completed) -->
+                <div class="progress mb-4" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                </div>
+
+                <% if (error) { %>
+                    <!-- Error Message -->
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <h5>Error Generating Key</h5>
+                        <p class="mb-0"><%= error %></p>
+                        <button class="btn btn-danger mt-2" onclick="location.reload()">
+                            Try Again
+                        </button>
+                    </div>
+                <% } else if (keyGenerated && keyValue) { %>
+                    <!-- Success - Key Generated -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h3 class="text-success">Congratulations!</h3>
+                        <p class="lead">Your access key has been generated successfully.</p>
+                    </div>
+
+                    <!-- Key Display -->
+                    <div class="card bg-dark text-light mb-4">
+                        <div class="card-header text-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-key me-2"></i>
+                                Your Access Key
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="key-display mb-3">
+                                <code class="fs-4 text-warning" id="accessKey"><%= keyValue %></code>
+                                <button class="btn btn-outline-light btn-sm ms-2" onclick="copyKey()" id="copyBtn">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            
+                            <!-- Key Expiration -->
+                            <div class="row text-center">
+                                <div class="col-md-6">
+                                    <small class="text-muted">Expires At:</small>
+                                    <div class="text-info">
+                                        <%= new Date(expiresAt).toLocaleString() %>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted">Time Remaining:</small>
+                                    <div class="text-warning" id="timeRemaining">
+                                        Calculating...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Management Actions -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-outline-primary w-100" onclick="checkKeyStatus()">
+                                <i class="fas fa-sync me-2"></i>
+                                Check Status
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-outline-warning w-100" onclick="regenerateKey()">
+                                <i class="fas fa-redo me-2"></i>
+                                Generate New Key
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Usage Instructions -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to Use Your Key:</h6>
+                        <ol class="mb-0 small">
+                            <li>Copy the access key above</li>
+                            <li>Use this key in your Lua script or application</li>
+                            <li>The key is valid for 24 hours from generation</li>
+                            <li>You can regenerate a new key if needed</li>
+                        </ol>
+                    </div>
+
+                    <!-- API Information -->
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-code me-2"></i>
+                                API Validation Endpoint
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="small mb-2">Use this endpoint to validate your key:</p>
+                            <code class="text-dark">POST <%= req.protocol + '://' + req.get('host') %>/api/validate</code>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Send JSON: <code>{"key": "YOUR_KEY_HERE"}</code>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- Loading State -->
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5>Generating Your Access Key...</h5>
+                        <p class="text-muted">Please wait while we create your unique access key.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Key Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="statusContent">
+                    <!-- Status content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regenerate Confirmation Modal -->
+    <div class="modal fade" id="regenerateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Regenerate Key</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to generate a new key?</p>
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Your current key will be revoked and cannot be used anymore.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="confirmRegenerate()">
+                        Generate New Key
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        // Copy key to clipboard
+        function copyKey() {
+            const keyElement = document.getElementById('accessKey');
+            const key = keyElement.textContent;
+            
+            navigator.clipboard.writeText(key).then(() => {
+                const copyBtn = document.getElementById('copyBtn');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyBtn.classList.add('btn-success');
+                copyBtn.classList.remove('btn-outline-light');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                    copyBtn.classList.add('btn-outline-light');
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy key. Please copy manually.');
+            });
+        }
+
+        // Update time remaining
+        function updateTimeRemaining() {
+            const expiresAt = new Date('<%= expiresAt %>');
+            const now = new Date();
+            const timeLeft = expiresAt - now;
+            
+            if (timeLeft <= 0) {
+                document.getElementById('timeRemaining').innerHTML = '<span class="text-danger">Expired</span>';
+                return;
+            }
+            
+            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            document.getElementById('timeRemaining').textContent = 
+                `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        // Check key status
+        function checkKeyStatus() {
+            fetch('/access/status')
+                .then(response => response.json())
+                .then(data => {
+                    let statusHtml = '';
+                    if (data.success && data.hasKey) {
+                        statusHtml = `
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle me-2"></i>Key Status: Active</h6>
+                                <p><strong>Key:</strong> <code>${data.keyValue}</code></p>
+                                <p><strong>Expires:</strong> ${new Date(data.expiresAt).toLocaleString()}</p>
+                                <p><strong>Usage Count:</strong> ${data.usageCount}</p>
+                                <p><strong>Last Used:</strong> ${data.lastUsed ? new Date(data.lastUsed).toLocaleString() : 'Never'}</p>
+                            </div>
+                        `;
+                    } else {
+                        statusHtml = `
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-times-circle me-2"></i>Key Status: Invalid</h6>
+                                <p>${data.message}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('statusContent').innerHTML = statusHtml;
+                    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    document.getElementById('statusContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>Error</h6>
+                            <p>Failed to check key status.</p>
+                        </div>
+                    `;
+                    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                    modal.show();
+                });
+        }
+
+        // Show regenerate confirmation
+        function regenerateKey() {
+            const modal = new bootstrap.Modal(document.getElementById('regenerateModal'));
+            modal.show();
+        }
+
+        // Confirm regenerate key
+        function confirmRegenerate() {
+            fetch('/access/regenerate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to regenerate key: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error regenerating key. Please try again.');
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            <% if (keyGenerated && keyValue) { %>
+                updateTimeRemaining();
+                setInterval(updateTimeRemaining, 1000);
+            <% } %>
+        });
+    </script>
+</body>
+</html>

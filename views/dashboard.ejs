@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 1400px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 15px;
+            color: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card.expired {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        .stat-card.active {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        }
+        .stat-card.total {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+        }
+        .key-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 15px;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-revoked {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .btn-action {
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 5px;
+            font-size: 0.8em;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+        }
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-tachometer-alt me-3"></i><%= title %></h1>
+                        <p class="mb-0">System Administration Panel</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-light me-2" onclick="refreshStats()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <a href="/dashboard/export" class="btn btn-success me-2">
+                            <i class="fas fa-download"></i> Export CSV
+                        </a>
+                        <form method="POST" action="/dashboard/logout" style="display: inline;">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="p-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-card total">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-1" id="totalKeys"><%= stats.total %></h3>
+                                    <p class="mb-0">Total Keys</p>
+                                </div>
+                                <i class="fas fa-key fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card active">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-1" id="activeKeys"><%= stats.active %></h3>
+                                    <p class="mb-0">Active Keys</p>
+                                </div>
+                                <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card expired">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-1" id="expiredKeys"><%= stats.expired %></h3>
+                                    <p class="mb-0">Expired Keys</p>
+                                </div>
+                                <i class="fas fa-clock fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h3 class="mb-1" id="revokedKeys"><%= stats.revoked %></h3>
+                                    <p class="mb-0">Revoked Keys</p>
+                                </div>
+                                <i class="fas fa-ban fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Section -->
+                <div class="search-section">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search keys, IP addresses...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="statusFilter" class="form-select">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                                <option value="revoked">Revoked</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filterKeys()">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-warning" onclick="cleanupExpired()">
+                                    <i class="fas fa-broom"></i> Cleanup
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteExpired()">
+                                    <i class="fas fa-trash"></i> Delete Expired
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keys Table -->
+                <div class="key-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Key Value</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Time Remaining</th>
+                                    <th>Usage Count</th>
+                                    <th>Last Used</th>
+                                    <th>IP Address</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keysTableBody">
+                                <% keys.forEach(function(key) { %>
+                                <tr data-key-id="<%= key._id %>">
+                                    <td><code><%= key.keyValue %></code></td>
+                                    <td>
+                                        <span class="status-badge status-<%= key.status.toLowerCase() %>">
+                                            <%= key.status %>
+                                        </span>
+                                    </td>
+                                    <td><%= key.createdAtFormatted %></td>
+                                    <td><%= key.expiresAtFormatted %></td>
+                                    <td>
+                                        <% if (key.isExpired) { %>
+                                            <span class="text-danger">Expired</span>
+                                        <% } else { %>
+                                            <span class="text-success"><%= key.timeRemaining %></span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= key.usageCount %></td>
+                                    <td><%= key.lastUsedFormatted %></td>
+                                    <td><%= key.ipAddressShort %></td>
+                                    <td>
+                                        <% if (key.status === 'ACTIVE') { %>
+                                        <button class="btn btn-sm btn-warning btn-action" onclick="revokeKey('<%= key._id %>')">
+                                            <i class="fas fa-ban"></i> Revoke
+                                        </button>
+                                        <% } %>
+                                        <button class="btn btn-sm btn-danger btn-action" onclick="deleteKey('<%= key._id %>')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Loading indicator -->
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing request...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">System</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastBody = document.getElementById('toastBody');
+            
+            toastBody.textContent = message;
+            toast.className = `toast bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} text-white`;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        // Show loading indicator
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+        }
+
+        // Hide loading indicator
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        // Refresh statistics
+        async function refreshStats() {
+            showLoading();
+            try {
+                const response = await fetch('/dashboard/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalKeys').textContent = data.stats.total;
+                    document.getElementById('activeKeys').textContent = data.stats.active;
+                    document.getElementById('expiredKeys').textContent = data.stats.expired;
+                    document.getElementById('revokedKeys').textContent = data.stats.revoked;
+                    showToast('Statistics refreshed successfully', 'success');
+                } else {
+                    showToast('Failed to refresh statistics', 'error');
+                }
+            } catch (error) {
+                showToast('Error refreshing statistics', 'error');
+            }
+            hideLoading();
+        }
+
+        // Filter keys
+        async function filterKeys() {
+            const search = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            showLoading();
+            try {
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (status !== 'all') params.append('status', status);
+                
+                const response = await fetch(`/dashboard/api/keys?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateKeysTable(data.keys);
+                    showToast(`Found ${data.keys.length} keys`, 'success');
+                } else {
+                    showToast('Failed to filter keys', 'error');
+                }
+            } catch (error) {
+                showToast('Error filtering keys', 'error');
+            }
+            hideLoading();
+        }
+
+        // Update keys table
+        function updateKeysTable(keys) {
+            const tbody = document.getElementById('keysTableBody');
+            tbody.innerHTML = '';
+            
+            keys.forEach(key => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-key-id', key._id);
+                row.innerHTML = `
+                    <td><code>${key.keyValue}</code></td>
+                    <td><span class="status-badge status-${key.status.toLowerCase()}">${key.status}</span></td>
+                    <td>${key.createdAtFormatted}</td>
+                    <td>${key.expiresAtFormatted}</td>
+                    <td>${key.isExpired ? '<span class="text-danger">Expired</span>' : `<span class="text-success">${key.timeRemaining}</span>`}</td>
+                    <td>${key.usageCount}</td>
+                    <td>${key.lastUsedFormatted}</td>
+                    <td>${key.ipAddress ? key.ipAddress.substring(0, 15) + '...' : 'Unknown'}</td>
+                    <td>
+                        ${key.status === 'ACTIVE' ? `<button class="btn btn-sm btn-warning btn-action" onclick="revokeKey('${key._id}')"><i class="fas fa-ban"></i> Revoke</button>` : ''}
+                        <button class="btn btn-sm btn-danger btn-action" onclick="deleteKey('${key._id}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Revoke key
+        async function revokeKey(keyId) {
+            if (!confirm('Are you sure you want to revoke this key?')) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`/dashboard/api/keys/${keyId}/revoke`, {
+                    method: 'PATCH'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Key revoked successfully', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message || 'Failed to revoke key', 'error');
+                }
+            } catch (error) {
+                showToast('Error revoking key', 'error');
+            }
+            hideLoading();
+        }
+
+        // Delete key
+        async function deleteKey(keyId) {
+            if (!confirm('Are you sure you want to delete this key? This action cannot be undone.')) return;
+            
+            showLoading();
+            try {
+                const response = await fetch(`/dashboard/api/keys/${keyId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Key deleted successfully', 'success');
+                    const row = document.querySelector(`tr[data-key-id="${keyId}"]`);
+                    if (row) row.remove();
+                    refreshStats();
+                } else {
+                    showToast(data.message || 'Failed to delete key', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting key', 'error');
+            }
+            hideLoading();
+        }
+
+        // Delete expired keys
+        async function deleteExpired() {
+            if (!confirm('Are you sure you want to delete all expired keys? This action cannot be undone.')) return;
+            
+            showLoading();
+            try {
+                const response = await fetch('/dashboard/api/keys/expired', {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`Deleted ${data.deletedCount} expired keys`, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message || 'Failed to delete expired keys', 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting expired keys', 'error');
+            }
+            hideLoading();
+        }
+
+        // Cleanup expired keys
+        async function cleanupExpired() {
+            showLoading();
+            try {
+                const response = await fetch('/dashboard/api/cleanup', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`Cleanup completed: ${data.updatedKeys} updated, ${data.deletedOldKeys} deleted`, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.message || 'Cleanup failed', 'error');
+                }
+            } catch (error) {
+                showToast('Error during cleanup', 'error');
+            }
+            hideLoading();
+        }
+
+        // Auto-refresh stats every 30 seconds
+        setInterval(refreshStats, 30000);
+
+        // Enter key search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                filterKeys();
+            }
+        });
+    </script>
+</body>
+</html>

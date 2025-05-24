@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Linkvertise API -->
+<script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script><script>linkvertise(572754, {whitelist: [], blacklist: [""]});</script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-gradient">
+        <div class="card checkpoint-card shadow-lg">
+            <div class="card-header text-center bg-primary text-white">
+                <h2 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    Checkpoint <%= checkpointNumber %>
+                </h2>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Progress Bar -->
+                <div class="progress mb-4" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: <%= (checkpointNumber / 3) * 100 %>%"></div>
+                </div>
+                
+                <!-- Progress Steps -->
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <div class="step <%= progress.checkpoint1 ? 'completed' : (checkpointNumber === 1 ? 'active' : '') %>">
+                            <div class="step-circle">
+                                <% if (progress.checkpoint1) { %>
+                                    <i class="fas fa-check"></i>
+                                <% } else { %>
+                                    1
+                                <% } %>
+                            </div>
+                            <div class="step-label">Ad 1</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="step <%= progress.checkpoint2 ? 'completed' : (checkpointNumber === 2 ? 'active' : '') %>">
+                            <div class="step-circle">
+                                <% if (progress.checkpoint2) { %>
+                                    <i class="fas fa-check"></i>
+                                <% } else { %>
+                                    2
+                                <% } %>
+                            </div>
+                            <div class="step-label">Ad 2</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="step <%= progress.checkpoint3 ? 'completed' : (checkpointNumber === 3 ? 'active' : '') %>">
+                            <div class="step-circle">
+                                <% if (progress.checkpoint3) { %>
+                                    <i class="fas fa-check"></i>
+                                <% } else { %>
+                                    3
+                                <% } %>
+                            </div>
+                            <div class="step-label">Get Key</div>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (isCompleted) { %>
+                    <!-- Already Completed -->
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <h5>Checkpoint <%= checkpointNumber %> Completed!</h5>
+                        <p class="mb-0">You have already completed this checkpoint.</p>
+                        <% if (checkpointNumber === 1) { %>
+                            <a href="/checkpoint/2" class="btn btn-success mt-2">
+                                Continue to Checkpoint 2
+                            </a>
+                        <% } else if (checkpointNumber === 2) { %>
+                            <a href="/access" class="btn btn-success mt-2">
+                                Get Your Access Key
+                            </a>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <!-- Checkpoint Instructions -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-ad fa-3x text-primary mb-3"></i>
+                        <h4><%= description %></h4>
+                        <p class="text-muted">
+                            Click the button below to view the advertisement. 
+                            You will be redirected back here once completed.
+                        </p>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="text-center mb-4">
+                        <a href="<%= nextUrl %>" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            View Advertisement <%= checkpointNumber %>
+                        </a>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Instructions:</h6>
+                        <ol class="mb-0 small">
+                            <li>Click the "View Advertisement" button above</li>
+                            <li>Complete the advertisement as required</li>
+                            <li>Wait for automatic redirect back to this site</li>
+                            <li>Your progress will be automatically saved</li>
+                        </ol>
+                    </div>
+                <% } %>
+
+                <!-- Session Info -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Session will expire in 24 hours
+                                    <span class="float-end">
+                                        Progress: <%= checkpointNumber %>/3
+                                    </span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Processing...</h5>
+                    <p class="text-muted mb-0">Please wait while we redirect you.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <script>
+        // Show loading modal when clicking advertisement link
+        document.addEventListener('DOMContentLoaded', function() {
+            const adButton = document.querySelector('a[href*="linkvertise"]');
+            if (adButton) {
+                adButton.addEventListener('click', function() {
+                    setTimeout(() => {
+                        const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+                        modal.show();
+                    }, 1000);
+                });
+            }
+
+            // Check completion status periodically
+            if (!<%= isCompleted %>) {
+                setInterval(checkCompletion, 5000);
+            }
+        });
+
+        function checkCompletion() {
+            fetch('/checkpoint/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.progress['checkpoint<%= checkpointNumber %>']) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.log('Status check failed:', error));
+        }
+    </script>
+</body>
+</html>

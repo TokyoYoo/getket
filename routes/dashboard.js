@@ -2,113 +2,85 @@ const express = require('express');
 const router = express.Router();
 const Key = require('../models/Key');
 const adminAuth = require('../middleware/adminAuth');
-const moment = require('moment');
 
-// Admin login page
-router.get('/login', adminAuth.loginPage);
+// Apply auth check to all dashboard routes
+router.use(adminAuth.checkAuth);
 
-// Admin login handler
-router.post('/login', adminAuth.login);
+// Login page
+router.get('/login', (req, res) => {
+    if (req.session.adminAuthenticated) {
+        return res.redirect('/dashboard');
+    }
+    
+    res.render('dashboard/login', {
+        title: 'Admin Login',
+        error: null
+    });
+});
 
-// Admin logout
-router.post('/logout', adminAuth.logout);
+// Handle login
+router.post('/login', adminAuth.authenticate);
 
-// Dashboard main page
+// Logout
+router.get('/logout', adminAuth.logout);
+
+// Dashboard main page (protected)
 router.get('/', adminAuth.requireAuth, async (req, res) => {
     try {
         // Get statistics
         const totalKeys = await Key.countDocuments();
-        const activeKeys = await Key.countDocuments({ 
-            status: 'ACTIVE', 
-            expiresAt: { $gt: new Date() } 
-        });
-        const expiredKeys = await Key.countDocuments({ 
-            status: 'EXPIRED' 
-        });
-        const revokedKeys = await Key.countDocuments({ 
-            status: 'REVOKED' 
-        });
+        const activeKeys = await Key.countDocuments({ status: 'active' });
+        const expiredKeys = await Key.countDocuments({ status: 'expired' });
+        const revokedKeys = await Key.countDocuments({ status: 'revoked' });
 
-        // Get recent keys (last 50)
+        // Get recent keys
         const recentKeys = await Key.find()
             .sort({ createdAt: -1 })
-            .limit(50)
+            .limit(20)
             .lean();
 
-        // Add formatted dates and time remaining
-        const formattedKeys = recentKeys.map(key => ({
-            ...key,
-            createdAtFormatted: moment(key.createdAt).format('YYYY-MM-DD HH:mm:ss'),
-            expiresAtFormatted: moment(key.expiresAt).format('YYYY-MM-DD HH:mm:ss'),
-            lastUsedFormatted: key.lastUsed ? moment(key.lastUsed).format('YYYY-MM-DD HH:mm:ss') : 'Never',
-            timeRemaining: key.expiresAt > new Date() ? 
-                moment.duration(moment(key.expiresAt).diff(moment())).humanize() : 
-                'Expired',
-            isExpired: key.expiresAt <= new Date(),
-            ipAddressShort: key.ipAddress ? key.ipAddress.substring(0, 15) + '...' : 'Unknown'
-        }));
+        // Calculate additional statistics
+        const last24Hours = new Date();
+        last24Hours.setHours(last24Hours.getHours() - 24);
+        const keysLast24h = await Key.countDocuments({
+            createdAt: { $gte: last24Hours }
+        });
 
-        const stats = {
-            total: totalKeys,
-            active: activeKeys,
-            expired: expiredKeys,
-            revoked: revokedKeys
-        };
-
-        res.render('dashboard', {
+        res.render('dashboard/index', {
             title: 'Admin Dashboard',
-            stats: stats,
-            keys: formattedKeys,
-            moment: moment
+            stats: {
+                total: totalKeys,
+                active: activeKeys,
+                expired: expiredKeys,
+                revoked: revokedKeys,
+                last24h: keysLast24h
+            },
+            recentKeys: recentKeys
         });
 
     } catch (error) {
         console.error('Dashboard error:', error);
-        res.status(500).render('error', {
-            title: 'Dashboard Error',
-            message: 'Failed to load dashboard data'
+        res.render('dashboard/index', {
+            title: 'Admin Dashboard',
+            error: 'Failed to load dashboard data',
+            stats: null,
+            recentKeys: []
         });
     }
 });
 
-// API endpoint to get key statistics
-router.get('/api/stats', adminAuth.isAdmin, async (req, res) => {
-    try {
-        const stats = await Promise.all([
-            Key.countDocuments(),
-            Key.countDocuments({ status: 'ACTIVE', expiresAt: { $gt: new Date() } }),
-            Key.countDocuments({ status: 'EXPIRED' }),
-            Key.countDocuments({ status: 'REVOKED' }),
-            Key.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24*60*60*1000) } })
-        ]);
-
-        res.json({
-            success: true,
-            stats: {
-                total: stats[0],
-                active: stats[1],
-                expired: stats[2],
-                revoked: stats[3],
-                todayCreated: stats[4]
-            }
-        });
-    } catch (error) {
-        console.error('Stats API error:', error);
-        res.json({ success: false, message: 'Failed to get statistics' });
-    }
-});
-
-// API endpoint to get keys with pagination
-router.get('/api/keys', adminAuth.isAdmin, async (req, res) => {
+// Keys management page
+router.get('/keys', adminAuth.requireAuth, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
+        const limit = parseInt(req.query.limit) || 50;
         const status = req.query.status;
         const search = req.query.search;
 
-        const query = {};
-        if (status && status !== 'all') {
-            query.status = status.toUpperCase();
+        // Build query
+        let query = {};
+        if (status && ['active', 'expired', 'revoked'].includes(status)) {
+            query.status = status;
         }
         if (search) {
             query.$or = [
@@ -118,153 +90,255 @@ router.get('/api/keys', adminAuth.isAdmin, async (req, res) => {
             ];
         }
 
-        const total = await Key.countDocuments(query);
         const keys = await Key.find(query)
             .sort({ createdAt: -1 })
-            .limit(limit)
+            .limit(limit * 1)
             .skip((page - 1) * limit)
             .lean();
 
-        const formattedKeys = keys.map(key => ({
-            ...key,
-            createdAtFormatted: moment(key.createdAt).format('YYYY-MM-DD HH:mm:ss'),
-            expiresAtFormatted: moment(key.expiresAt).format('YYYY-MM-DD HH:mm:ss'),
-            lastUsedFormatted: key.lastUsed ? moment(key.lastUsed).format('YYYY-MM-DD HH:mm:ss') : 'Never',
-            timeRemaining: key.expiresAt > new Date() ? 
-                moment.duration(moment(key.expiresAt).diff(moment())).humanize() : 
-                'Expired',
-            isExpired: key.expiresAt <= new Date()
-        }));
+        const totalKeys = await Key.countDocuments(query);
+        const totalPages = Math.ceil(totalKeys / limit);
 
-        res.json({
-            success: true,
-            keys: formattedKeys,
+        res.render('dashboard/keys', {
+            title: 'Key Management',
+            keys: keys,
             pagination: {
                 current: page,
-                total: Math.ceil(total / limit),
-                count: total,
-                limit: limit
-            }
+                total: totalPages,
+                limit: limit,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            },
+            filters: {
+                status: status,
+                search: search
+            },
+            totalKeys: totalKeys
         });
+
     } catch (error) {
-        console.error('Keys API error:', error);
-        res.json({ success: false, message: 'Failed to get keys' });
+        console.error('Keys management error:', error);
+        res.render('dashboard/keys', {
+            title: 'Key Management',
+            error: 'Failed to load keys data',
+            keys: [],
+            pagination: null,
+            filters: {},
+            totalKeys: 0
+        });
     }
 });
 
-// Delete specific key
-router.delete('/api/keys/:keyId', adminAuth.isAdmin, async (req, res) => {
+// Delete key
+router.delete('/keys/:keyId', adminAuth.requireAuth, async (req, res) => {
     try {
         const keyId = req.params.keyId;
-        const result = await Key.findByIdAndDelete(keyId);
-        
-        if (!result) {
-            return res.json({ success: false, message: 'Key not found' });
+        const deletedKey = await Key.findByIdAndDelete(keyId);
+
+        if (!deletedKey) {
+            return res.status(404).json({
+                success: false,
+                error: 'Key not found'
+            });
         }
-
-        res.json({ success: true, message: 'Key deleted successfully' });
-    } catch (error) {
-        console.error('Delete key error:', error);
-        res.json({ success: false, message: 'Failed to delete key' });
-    }
-});
-
-// Revoke specific key
-router.patch('/api/keys/:keyId/revoke', adminAuth.isAdmin, async (req, res) => {
-    try {
-        const keyId = req.params.keyId;
-        const result = await Key.findByIdAndUpdate(
-            keyId, 
-            { status: 'REVOKED' }, 
-            { new: true }
-        );
-        
-        if (!result) {
-            return res.json({ success: false, message: 'Key not found' });
-        }
-
-        res.json({ success: true, message: 'Key revoked successfully', key: result });
-    } catch (error) {
-        console.error('Revoke key error:', error);
-        res.json({ success: false, message: 'Failed to revoke key' });
-    }
-});
-
-// Bulk delete expired keys
-router.delete('/api/keys/expired', adminAuth.isAdmin, async (req, res) => {
-    try {
-        const result = await Key.deleteMany({ 
-            $or: [
-                { status: 'EXPIRED' },
-                { expiresAt: { $lt: new Date() } }
-            ]
-        });
-
-        res.json({ 
-            success: true, 
-            message: `Deleted ${result.deletedCount} expired keys`,
-            deletedCount: result.deletedCount
-        });
-    } catch (error) {
-        console.error('Bulk delete error:', error);
-        res.json({ success: false, message: 'Failed to delete expired keys' });
-    }
-});
-
-// Clean up and update expired keys status
-router.post('/api/cleanup', adminAuth.isAdmin, async (req, res) => {
-    try {
-        // Update expired keys status
-        const updateResult = await Key.updateMany(
-            { expiresAt: { $lt: new Date() }, status: 'ACTIVE' },
-            { status: 'EXPIRED' }
-        );
-
-        // Optionally delete old expired keys (older than 7 days)
-        const deleteOldResult = await Key.deleteMany({
-            status: 'EXPIRED',
-            expiresAt: { $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-        });
 
         res.json({
             success: true,
-            message: 'Cleanup completed',
-            updatedKeys: updateResult.matchedCount,
-            deletedOldKeys: deleteOldResult.deletedCount
+            message: 'Key deleted successfully'
         });
+
     } catch (error) {
-        console.error('Cleanup error:', error);
-        res.json({ success: false, message: 'Cleanup failed' });
+        console.error('Delete key error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete key'
+        });
     }
 });
 
-// Export keys data (CSV format)
-router.get('/export', adminAuth.requireAuth, async (req, res) => {
+// Revoke key
+router.patch('/keys/:keyId/revoke', adminAuth.requireAuth, async (req, res) => {
     try {
-        const keys = await Key.find().lean();
-        
-        // Create CSV content
-        const csvHeader = 'Key,Status,Created,Expires,IP Address,Usage Count,Last Used\n';
-        const csvContent = keys.map(key => {
-            return [
-                key.keyValue,
-                key.status,
-                moment(key.createdAt).format('YYYY-MM-DD HH:mm:ss'),
-                moment(key.expiresAt).format('YYYY-MM-DD HH:mm:ss'),
-                key.ipAddress,
-                key.usageCount,
-                key.lastUsed ? moment(key.lastUsed).format('YYYY-MM-DD HH:mm:ss') : 'Never'
-            ].join(',');
-        }).join('\n');
+        const keyId = req.params.keyId;
+        const key = await Key.findByIdAndUpdate(
+            keyId,
+            { status: 'revoked' },
+            { new: true }
+        );
 
-        const csv = csvHeader + csvContent;
+        if (!key) {
+            return res.status(404).json({
+                success: false,
+                error: 'Key not found'
+            });
+        }
 
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=keys-export-${moment().format('YYYY-MM-DD')}.csv`);
-        res.send(csv);
+        res.json({
+            success: true,
+            message: 'Key revoked successfully',
+            key: key
+        });
+
     } catch (error) {
-        console.error('Export error:', error);
-        res.status(500).send('Export failed');
+        console.error('Revoke key error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to revoke key'
+        });
+    }
+});
+
+// Bulk operations
+router.post('/keys/bulk', adminAuth.requireAuth, async (req, res) => {
+    try {
+        const { action, keyIds } = req.body;
+
+        if (!action || !keyIds || !Array.isArray(keyIds)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid request parameters'
+            });
+        }
+
+        let result;
+        switch (action) {
+            case 'delete':
+                result = await Key.deleteMany({ _id: { $in: keyIds } });
+                break;
+            case 'revoke':
+                result = await Key.updateMany(
+                    { _id: { $in: keyIds } },
+                    { status: 'revoked' }
+                );
+                break;
+            case 'cleanup_expired':
+                result = await Key.deleteMany({ 
+                    status: 'expired',
+                    expiresAt: { $lt: new Date() }
+                });
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid action'
+                });
+        }
+
+        res.json({
+            success: true,
+            message: `Bulk ${action} completed`,
+            affected: result.deletedCount || result.modifiedCount || 0
+        });
+
+    } catch (error) {
+        console.error('Bulk operation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Bulk operation failed'
+        });
+    }
+});
+
+// Analytics page
+router.get('/analytics', adminAuth.requireAuth, async (req, res) => {
+    try {
+        // Get analytics data
+        const now = new Date();
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 30);
+
+        // Daily key creation stats for last 30 days
+        const dailyStats = await Key.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: last30Days }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" },
+                        day: { $dayOfMonth: "$createdAt" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 }
+            }
+        ]);
+
+        // Status distribution
+        const statusStats = await Key.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Top IP addresses
+        const topIPs = await Key.aggregate([
+            {
+                $group: {
+                    _id: "$ipAddress",
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { count: -1 }
+            },
+            {
+                $limit: 10
+            }
+        ]);
+
+        res.render('dashboard/analytics', {
+            title: 'Analytics',
+            dailyStats: dailyStats,
+            statusStats: statusStats,
+            topIPs: topIPs
+        });
+
+    } catch (error) {
+        console.error('Analytics error:', error);
+        res.render('dashboard/analytics', {
+            title: 'Analytics',
+            error: 'Failed to load analytics data',
+            dailyStats: [],
+            statusStats: [],
+            topIPs: []
+        });
+    }
+});
+
+// Settings page
+router.get('/settings', adminAuth.requireAuth, (req, res) => {
+    res.render('dashboard/settings', {
+        title: 'Settings',
+        settings: {
+            keyExpiryHours: process.env.KEY_EXPIRY_HOURS || 24,
+            linkvertiseUserId: process.env.LINKVERTISE_USER_ID || 572754,
+            adminUsername: process.env.ADMIN_USERNAME || 'admin'
+        }
+    });
+});
+
+// API endpoint for dashboard stats (AJAX)
+router.get('/api/stats', adminAuth.requireAuth, async (req, res) => {
+    try {
+        const stats = {
+            total: await Key.countDocuments(),
+            active: await Key.countDocuments({ status: 'active' }),
+            expired: await Key.countDocuments({ status: 'expired' }),
+            revoked: await Key.countDocuments({ status: 'revoked' })
+        };
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch stats' });
     }
 });
 
