@@ -1,31 +1,28 @@
 {
   "name": "checkpoint-key-system",
   "version": "1.0.0",
-  "description": "Web system with checkpoint flow and key management",
+  "description": "3-checkpoint verification system with MongoDB and Linkvertise integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "connect-mongo": "^5.1.0",
-    "dotenv": "^16.3.1",
-    "ejs": "^3.1.9",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
-    "mongoose": "^8.0.3"
+    "connect-mongo": "^5.1.0",
+    "mongoose": "^7.6.3",
+    "ejs": "^3.1.9",
+    "dotenv": "^16.3.1",
+    "crypto": "^1.0.1",
+    "node-cron": "^3.0.2",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.1"
   },
-  "keywords": [
-    "express",
-    "mongodb",
-    "session",
-    "checkpoint",
-    "key-management"
-  ],
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

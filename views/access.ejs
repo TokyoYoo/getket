@@ -1,268 +1,292 @@
-<div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-key"></i>
-                    Access Key Management
-                </h3>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c5530 0%, #5a9c3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #4ade80;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+        
+        .key-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        
+        .key-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .key-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            word-break: break-all;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+        
+        .new-key-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #10b981, #059669);
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .warning {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">🔑</div>
+        
+        <% if (isNew) { %>
+            <div class="new-key-badge">NEW KEY GENERATED</div>
+        <% } %>
+        
+        <h1><%= title %></h1>
+        
+        <div class="key-container">
+            <div class="key-label">Your Access Key</div>
+            <div class="key-value" id="keyValue"><%= key %></div>
+            <button class="copy-btn" onclick="copyKey()">📋 Copy Key</button>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Time Remaining</div>
+                <div class="info-value timer" id="remainingTime"><%= remainingTime %></div>
             </div>
-            <div class="card-body">
-                <% if (typeof error !== 'undefined' && error) { %>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <%= error %>
-                    </div>
-                <% } %>
-
-                <% if (typeof isNewKey !== 'undefined' && isNewKey) { %>
-                    <div class="alert alert-success" role="alert">
-                        <i class="fas fa-check-circle"></i>
-                        <strong>New access key generated successfully!</strong>
-                    </div>
-                <% } %>
-
-                <% if (hasKey && key) { %>
-                    <!-- Active Key Display -->
-                    <div class="alert alert-info mb-4">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Congratulations!</strong> You have successfully completed all checkpoints.
-                    </div>
-
-                    <div class="key-display mb-4">
-                        <h5>Your Access Key:</h5>
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control form-control-lg font-monospace" 
-                                   id="accessKey" value="<%= key.keyValue %>" readonly>
-                            <button class="btn btn-outline-secondary" type="button" 
-                                    onclick="copyToClipboard()">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                        </div>
-                        <small class="text-muted">
-                            Use this key to access the premium features.
-                        </small>
-                    </div>
-
-                    <!-- Key Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        <i class="fas fa-clock"></i>
-                                        Time Remaining
-                                    </h6>
-                                    <p class="card-text h5 text-primary" id="timeRemaining">
-                                        <%= timeRemaining %>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        <i class="fas fa-calendar"></i>
-                                        Expires At
-                                    </h6>
-                                    <p class="card-text">
-                                        <%= new Date(key.expiresAt).toLocaleString() %>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Key Usage Stats -->
-                    <div class="card bg-light mb-4">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <i class="fas fa-chart-bar"></i>
-                                Usage Statistics
-                            </h6>
-                            <div class="row">
-                                <div class="col-sm-4">
-                                    <strong>Access Count:</strong>
-                                    <span class="badge bg-primary">
-                                        <%= key.accessCount || 0 %>
-                                    </span>
-                                </div>
-                                <div class="col-sm-4">
-                                    <strong>Status:</strong>
-                                    <span class="badge bg-success">Active</span>
-                                </div>
-                                <div class="col-sm-4">
-                                    <strong>Last Used:</strong>
-                                    <small class="text-muted">
-                                        <%= key.lastAccessed ? new Date(key.lastAccessed).toLocaleString() : 'Never' %>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
-                        <button type="button" class="btn btn-warning" onclick="generateNewKey()">
-                            <i class="fas fa-refresh"></i>
-                            Generate New Key
-                        </button>
-                        <button type="button" class="btn btn-info" onclick="checkKeyStatus()">
-                            <i class="fas fa-sync"></i>
-                            Refresh Status
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="extendKey()">
-                            <i class="fas fa-clock"></i>
-                            Extend Expiry
-                        </button>
-                    </div>
-
-                    <!-- API Usage Instructions -->
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-code"></i>
-                                API Usage
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <p>Use your key to access the API endpoints:</p>
-                            <div class="code-block">
-                                <pre><code>GET /api/validate?key=<%= key.keyValue %></code></pre>
-                            </div>
-                            <small class="text-muted">
-                                Include your key in API requests to access protected endpoints.
-                            </small>
-                        </div>
-                    </div>
-
-                <% } else { %>
-                    <!-- No Key Available -->
-                    <div class="alert alert-warning" role="alert">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>No active key found.</strong>
-                        Complete all checkpoints to generate an access key.
-                    </div>
-
-                    <div class="text-center">
-                        <a href="/checkpoint/1" class="btn btn-primary btn-lg">
-                            <i class="fas fa-arrow-left"></i>
-                            Start Checkpoint Process
-                        </a>
-                    </div>
-                <% } %>
+            <div class="info-item">
+                <div class="info-label">Expires At</div>
+                <div class="info-value" id="expiresAt">
+                    <%= new Date(expiresAt).toLocaleString() %>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Success Toast -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="successToast" class="toast" role="alert">
-        <div class="toast-header bg-success text-white">
-            <i class="fas fa-check-circle me-2"></i>
-            <strong class="me-auto">Success</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        
+        <div class="warning">
+            ⚠️ <strong>Important:</strong> This key is valid for 24 hours only. Save it securely and use it before it expires. If the key expires, you'll need to complete the verification process again.
         </div>
-        <div class="toast-body" id="toastMessage">
-            Action completed successfully!
-        </div>
+        
+        <button class="refresh-btn" onclick="refreshPage()">🔄 Refresh Status</button>
     </div>
-</div>
-
-<script>
-// Copy key to clipboard
-function copyToClipboard() {
-    const keyInput = document.getElementById('accessKey');
-    keyInput.select();
-    keyInput.setSelectionRange(0, 99999);
-    document.execCommand('copy');
     
-    showToast('Key copied to clipboard!');
-}
-
-// Generate new key
-function generateNewKey() {
-    if (confirm('Are you sure you want to generate a new key? This will revoke your current key.')) {
-        fetch('/access/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+    <script>
+        // Copy key to clipboard
+        function copyKey() {
+            const keyValue = document.getElementById('keyValue').textContent;
+            navigator.clipboard.writeText(keyValue).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = 'linear-gradient(45deg, #10b981, #059669)';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'linear-gradient(45deg, #3b82f6, #1d4ed8)';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = keyValue;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Refresh page
+        function refreshPage() {
+            window.location.reload();
+        }
+        
+        // Update countdown timer every minute
+        function updateTimer() {
+            const expiresAt = new Date('<%= expiresAt %>');
+            const now = new Date();
+            const remaining = expiresAt - now;
+            
+            if (remaining <= 0) {
+                document.getElementById('remainingTime').textContent = 'EXPIRED';
+                document.getElementById('remainingTime').style.color = '#ef4444';
+                // Redirect to checkpoint 1 after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/checkpoint/1';
+                }, 3000);
+                return;
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Failed to generate new key: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error occurred');
-        });
-    }
-}
-
-// Check key status
-function checkKeyStatus() {
-    fetch('/access/status')
-        .then(response => response.json())
-        .then(data => {
-            if (data.hasKey) {
-                document.getElementById('timeRemaining').textContent = data.timeRemaining;
-                showToast('Status updated!');
-            } else {
-                alert('Key has expired or is no longer valid');
-                location.reload();
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to check status');
-        });
-}
-
-// Extend key expiry
-function extendKey() {
-    const hours = prompt('Enter additional hours to extend (default: 24):', '24');
-    if (hours && parseInt(hours) > 0) {
-        fetch('/access/extend', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ hours: parseInt(hours) })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast(data.message);
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                alert('Failed to extend key: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error occurred');
-        });
-    }
-}
-
-// Show toast notification
-function showToast(message) {
-    document.getElementById('toastMessage').textContent = message;
-    const toast = new bootstrap.Toast(document.getElementById('successToast'));
-    toast.show();
-}
-
-// Auto-update time remaining every minute
-<% if (hasKey && key) { %>
-setInterval(function() {
-    checkKeyStatus();
-}, 60000);
-<% } %>
-</script>
+            
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+            
+            document.getElementById('remainingTime').textContent = `${hours}h ${minutes}m ${seconds}s`;
+        }
+        
+        // Update timer every second
+        setInterval(updateTimer, 1000);
+        
+        // Initial timer update
+        updateTimer();
+        
+        // Auto-refresh every 5 minutes to check key status
+        setInterval(() => {
+            fetch('/access/status/<%= key %>')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.exists || data.expired) {
+                        window.location.href = '/checkpoint/1';
+                    }
+                })
+                .catch(console.error);
+        }, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

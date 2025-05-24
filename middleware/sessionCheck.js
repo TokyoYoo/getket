@@ -1,129 +1,149 @@
-// Middleware to check session and checkpoint progress
-const sessionCheck = {
-    // Initialize session checkpoint data
-    initializeSession: (req, res, next) => {
-        if (!req.session.checkpoint) {
-            req.session.checkpoint = {
-                current: 0,
-                completed: [],
-                startTime: new Date(),
-                ipAddress: req.ip || req.connection.remoteAddress
-            };
-        }
-        next();
-    },
+// Middleware to check checkpoint progression and session validity
 
-    // Check if user can access specific checkpoint
-    canAccessCheckpoint: (checkpointNumber) => {
-        return (req, res, next) => {
-            const checkpoint = req.session.checkpoint;
-            
-            // Initialize session if not exists
-            if (!checkpoint) {
-                req.session.checkpoint = {
-                    current: 0,
-                    completed: [],
-                    startTime: new Date(),
-                    ipAddress: req.ip || req.connection.remoteAddress
-                };
-            }
+const Key = require('../models/Key');
 
-            // Allow access to checkpoint 1 always
-            if (checkpointNumber === 1) {
-                return next();
-            }
-
-            // For checkpoint 2, must have completed checkpoint 1
-            if (checkpointNumber === 2) {
-                if (!req.session.checkpoint.completed.includes(1)) {
-                    return res.redirect('/checkpoint/1');
-                }
-                return next();
-            }
-
-            // For checkpoint 3 (access), must have completed checkpoints 1 and 2
-            if (checkpointNumber === 3) {
-                if (!req.session.checkpoint.completed.includes(1) || 
-                    !req.session.checkpoint.completed.includes(2)) {
-                    return res.redirect('/checkpoint/1');
-                }
-                return next();
-            }
-
-            next();
-        };
-    },
-
-    // Mark checkpoint as completed
-    completeCheckpoint: (checkpointNumber) => {
-        return (req, res, next) => {
-            if (!req.session.checkpoint) {
-                req.session.checkpoint = {
-                    current: 0,
-                    completed: [],
-                    startTime: new Date(),
-                    ipAddress: req.ip || req.connection.remoteAddress
-                };
-            }
-
-            // Add to completed if not already there
-            if (!req.session.checkpoint.completed.includes(checkpointNumber)) {
-                req.session.checkpoint.completed.push(checkpointNumber);
-            }
-
-            req.session.checkpoint.current = Math.max(
-                req.session.checkpoint.current, 
-                checkpointNumber
-            );
-
-            next();
-        };
-    },
-
-    // Check if coming from Linkvertise (basic validation)
-    validateLinkvertiseReturn: (req, res, next) => {
-        const referer = req.get('Referer');
-        const userAgent = req.get('User-Agent');
-        
-        // Basic validation - you might want to add more sophisticated checks
-        // This is a simple check, Linkvertise might have specific parameters
-        
-        // For now, we'll allow all returns and let Linkvertise script handle validation
-        req.isFromLinkvertise = true;
-        next();
-    },
-
-    // Check if session is valid and not expired
-    validateSession: (req, res, next) => {
-        if (!req.session.checkpoint) {
-            return res.redirect('/checkpoint/1');
-        }
-
-        // Check if session is too old (optional additional check)
-        const sessionAge = new Date() - new Date(req.session.checkpoint.startTime);
-        const maxSessionAge = 24 * 60 * 60 * 1000; // 24 hours
-
-        if (sessionAge > maxSessionAge) {
-            req.session.destroy((err) => {
-                if (err) console.error('Session destroy error:', err);
-                return res.redirect('/checkpoint/1');
-            });
-            return;
-        }
-
-        next();
-    },
-
-    // Reset session (useful for testing or forced restart)
-    resetSession: (req, res, next) => {
-        req.session.checkpoint = {
-            current: 0,
-            completed: [],
-            startTime: new Date(),
-            ipAddress: req.ip || req.connection.remoteAddress
-        };
-        next();
-    }
+// Initialize session checkpoint data
+const initializeSession = (req, res, next) => {
+  if (!req.session.checkpoints) {
+    req.session.checkpoints = {
+      passed1: false,
+      passed2: false,
+      passed3: false
+    };
+  }
+  
+  // Verify device fingerprint consistency
+  if (req.session.fingerprint && req.session.fingerprint !== req.deviceFingerprint) {
+    console.log('Device fingerprint mismatch - resetting session');
+    req.session.destroy((err) => {
+      if (err) console.error('Session destroy error:', err);
+      res.redirect('/checkpoint/1');
+    });
+    return;
+  }
+  
+  next();
 };
 
-module.exports = sessionCheck;
+// Check if user can access specific checkpoint
+const checkCheckpointAccess = (requiredCheckpoint) => {
+  return (req, res, next) => {
+    if (!req.session.checkpoints) {
+      return res.redirect('/checkpoint/1');
+    }
+    
+    const { passed1, passed2, passed3 } = req.session.checkpoints;
+    
+    switch (requiredCheckpoint) {
+      case 1:
+        // Always allow access to checkpoint 1
+        next();
+        break;
+        
+      case 2:
+        if (!passed1) {
+          return res.redirect('/checkpoint/1');
+        }
+        next();
+        break;
+        
+      case 3:
+        if (!passed1 || !passed2) {
+          return res.redirect('/checkpoint/1');
+        }
+        next();
+        break;
+        
+      case 'access':
+        if (!passed1 || !passed2 || !passed3) {
+          return res.redirect('/checkpoint/1');
+        }
+        next();
+        break;
+        
+      default:
+        res.redirect('/checkpoint/1');
+    }
+  };
+};
+
+// Mark checkpoint as passed and update database if key exists
+const markCheckpointPassed = async (req, checkpointNumber) => {
+  req.session.checkpoints[`passed${checkpointNumber}`] = true;
+  
+  // Update database record if key exists
+  if (req.session.keyId) {
+    try {
+      await Key.findOneAndUpdate(
+        { 
+          sessionId: req.sessionID,
+          deviceFingerprint: req.deviceFingerprint 
+        },
+        { 
+          [`checkpointProgress.passed${checkpointNumber}`]: true 
+        }
+      );
+    } catch (error) {
+      console.error('Error updating checkpoint progress:', error);
+    }
+  }
+};
+
+// Validate Linkvertise callback (this should be called when user returns from Linkvertise)
+const validateLinkvertiseCallback = (checkpointNumber) => {
+  return async (req, res, next) => {
+    // In a real implementation, you might want to validate the callback
+    // from Linkvertise to ensure it's legitimate
+    
+    // For now, we'll assume if they reached this endpoint, they passed through Linkvertise
+    try {
+      await markCheckpointPassed(req, checkpointNumber);
+      
+      // Redirect to next checkpoint or access page
+      if (checkpointNumber < 3) {
+        res.redirect(`/checkpoint/${checkpointNumber + 1}`);
+      } else {
+        res.redirect('/access');
+      }
+    } catch (error) {
+      console.error('Error processing Linkvertise callback:', error);
+      res.redirect(`/checkpoint/${checkpointNumber}`);
+    }
+  };
+};
+
+// Check if user has valid key and session
+const checkValidKey = async (req, res, next) => {
+  try {
+    if (!req.session.keyId) {
+      return next();
+    }
+    
+    const key = await Key.findValidKey(
+      req.session.keyId,
+      req.sessionID,
+      req.deviceFingerprint
+    );
+    
+    if (!key) {
+      // Key is invalid or expired, clear session
+      delete req.session.keyId;
+      delete req.session.checkpoints;
+      return res.redirect('/checkpoint/1');
+    }
+    
+    req.userKey = key;
+    next();
+  } catch (error) {
+    console.error('Error checking valid key:', error);
+    next();
+  }
+};
+
+module.exports = {
+  initializeSession,
+  checkCheckpointAccess,
+  markCheckpointPassed,
+  validateLinkvertiseCallback,
+  checkValidKey
+};
