@@ -3,341 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Key Access System</title>
-    
-    <!-- Linkvertise Integration -->
-    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
-    <script>
-        linkvertise(57731, {
-            whitelist: [], 
-            blacklist: [""]
-        });
-    </script>
+    <title><%= title || 'Key System' %></title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Custom CSS -->
+    <!-- Linkvertise API - CRITICAL: Only this script can redirect -->
+    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
+    <script>linkvertise(572754, {whitelist: [], blacklist: [""]});</script>
+    
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --dark-color: #34495e;
-        }
-
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .main-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
+        
         .card {
-            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
-            color: white;
-            border-radius: 20px 20px 0 0 !important;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .progress-container {
-            margin: 20px 0;
-        }
-
-        .checkpoint-progress {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .checkpoint-step {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #e9ecef;
-            border: 2px solid #dee2e6;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .checkpoint-step.completed {
-            background: var(--success-color);
-            border-color: var(--success-color);
-            color: white;
-        }
-
-        .checkpoint-step.active {
-            background: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
-        }
-
-        .progress-line {
-            flex: 1;
-            height: 2px;
-            background: #dee2e6;
-            margin: 0 10px;
-            position: relative;
-        }
-
-        .progress-line.completed::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background: var(--success-color);
-            transition: width 0.5s ease;
-        }
-
+        
         .btn-primary {
-            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
             border: none;
-            border-radius: 50px;
+            border-radius: 25px;
             padding: 12px 30px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: all 0.3s ease;
         }
-
+        
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.4);
         }
-
+        
         .btn-success {
-            background: linear-gradient(135deg, var(--success-color), #229954);
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%);
             border: none;
-            border-radius: 50px;
+            border-radius: 25px;
             padding: 12px 30px;
             font-weight: 600;
+            transition: all 0.3s ease;
         }
-
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(86, 171, 47, 0.4);
+        }
+        
         .btn-warning {
-            background: linear-gradient(135deg, var(--warning-color), #d68910);
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
             border: none;
-            border-radius: 50px;
+            border-radius: 25px;
             padding: 12px 30px;
-        }
-
-        .key-display {
-            background: #f8f9fa;
-            border: 2px dashed var(--success-color);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .key-value {
-            font-family: 'Courier New', monospace;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--success-color);
-            word-break: break-all;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-
-        .countdown-timer {
-            background: var(--warning-color);
+            font-weight: 600;
             color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-top: 10px;
+            transition: all 0.3s ease;
         }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.4);
+            color: white;
         }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner-border {
-            width: 3rem;
-            height: 3rem;
-        }
-
-        .alert {
+        
+        .progress {
+            height: 8px;
             border-radius: 10px;
-            border: none;
+            background: rgba(255, 255, 255, 0.2);
         }
-
+        
+        .progress-bar {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+        }
+        
         .navbar {
-            background: linear-gradient(135deg, var(--primary-color), var(--dark-color)) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .navbar-brand {
+        
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 600;
+        }
+        
+        .text-white-custom {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .key-display {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            word-break: break-all;
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .checkpoint-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: 14px;
         }
-
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 10px;
-            }
-            
-            .card {
-                margin: 10px;
-            }
-            
-            .key-value {
-                font-size: 1.2rem;
-            }
-            
-            .checkpoint-progress {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .progress-line {
-                width: 2px;
-                height: 20px;
-                margin: 5px 0;
-            }
+        
+        .completed-badge {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%) !important;
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-key me-2"></i>Key System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/checkpoint/1">
+                            <i class="fas fa-flag-checkered me-1"></i>Checkpoints
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/access">
+                            <i class="fas fa-unlock me-1"></i>Access
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
         <%- body %>
     </div>
 
-    <div class="footer">
-        <p>&copy; 2024 Key Access System. All rights reserved.</p>
-    </div>
+    <!-- Footer -->
+    <footer class="mt-5 py-4 text-center text-white-custom">
+        <div class="container">
+            <hr style="border-color: rgba(255, 255, 255, 0.2);">
+            <p class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                Secure Key Management System &copy; <%= new Date().getFullYear() %>
+            </p>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom JavaScript -->
+    <!-- Common JavaScript Functions -->
     <script>
-        // Auto-refresh countdown timers
-        function updateCountdowns() {
-            const countdowns = document.querySelectorAll('.countdown-timer[data-expires]');
-            countdowns.forEach(countdown => {
-                const expiresAt = new Date(countdown.dataset.expires);
-                const now = new Date();
-                const diff = expiresAt - now;
-                
-                if (diff <= 0) {
-                    countdown.innerHTML = '<i class="fas fa-clock"></i> Expired';
-                    countdown.className = countdown.className.replace('alert-warning', 'alert-danger');
-                } else {
-                    const hours = Math.floor(diff / (1000 * 60 * 60));
-                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    countdown.innerHTML = `<i class="fas fa-clock"></i> ${hours}h ${minutes}m ${seconds}s remaining`;
-                }
-            });
+        // Utility functions for the entire application
+        function showLoading(buttonElement) {
+            if (buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<span class="loading-spinner me-2"></span>Loading...';
+            }
         }
-
-        // Update countdowns every second
-        setInterval(updateCountdowns, 1000);
-        updateCountdowns(); // Initial call
-
-        // Copy to clipboard functionality
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('Copied to clipboard!', 'success');
-            }).catch(() => {
-                // Fallback for older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showNotification('Copied to clipboard!', 'success');
-            });
+        
+        function hideLoading(buttonElement, originalText) {
+            if (buttonElement) {
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalText;
+            }
         }
-
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            notification.innerHTML = `
+        
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
-            document.body.appendChild(notification);
             
-            // Auto-remove after 3 seconds
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto dismiss after 5 seconds
             setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
                 }
-            }, 3000);
+            }, 5000);
         }
-
-        // Add click handlers for copy buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            const copyButtons = document.querySelectorAll('.copy-btn');
-            copyButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const textToCopy = this.dataset.copy;
-                    copyToClipboard(textToCopy);
-                });
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Copied to clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Failed to copy to clipboard', 'danger');
             });
-        });
-
-        // Handle Linkvertise completion
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'linkvertise_complete') {
-                // Handle successful completion
-                console.log('Linkvertise completed');
-                // You can add custom logic here if needed
-            }
-        });
+        }
+        
+        // Check session status periodically
+        setInterval(() => {
+            fetch('/api/validate-session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success && window.location.pathname !== '/checkpoint/1') {
+                        showAlert('Session expired. Redirecting to checkpoint 1...', 'warning');
+                        setTimeout(() => {
+                            window.location.href = '/checkpoint/1';
+                        }, 2000);
+                    }
+                })
+                .catch(() => {
+                    // Silently fail - network issues shouldn't interrupt user experience
+                });
+        }, 300000); // Check every 5 minutes
     </script>
 </body>
 </html>
