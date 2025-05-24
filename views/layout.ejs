@@ -3,446 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | Key Verification System</title>
+    <title><%= title || 'Key System' %></title>
     
-    <!-- Linkvertise Script - ONLY authorized redirect method -->
-    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
-    <script>
-        // Initialize Linkvertise with your publisher ID
-        linkvertise(572754, {
-            whitelist: [], 
-            blacklist: [""]
-        });
-    </script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Linkvertise API - CRITICAL: Only this script can redirect -->
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         .card {
-            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
         
-        .checkpoint-card {
-            max-width: 600px;
+        .btn-primary {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
         }
         
-        h1, h2 {
-            color: #4a5568;
-            margin-bottom: 20px;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.4);
         }
         
-        h1 {
-            font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .btn-success {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(86, 171, 47, 0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.4);
+            color: white;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
         }
         
         .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-        
-        .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 10px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #718096, #4a5568);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #fc8181, #e53e3e);
-        }
-        
-        .key-display {
-            background: #f7fafc;
-            border: 2px dashed #cbd5e0;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
             border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            font-weight: bold;
-            color: #2d3748;
-            word-break: break-all;
         }
         
-        .timer {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 18px;
+        .navbar {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
             font-weight: 600;
         }
         
-        .expired {
-            background: linear-gradient(135deg, #fc8181, #e53e3e);
+        .text-white-custom {
+            color: rgba(255, 255, 255, 0.9) !important;
         }
         
-        .info-box {
-            background: #ebf8ff;
-            border-left: 4px solid #3182ce;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 10px 10px 0;
-        }
-        
-        .warning-box {
-            background: #fffbeb;
-            border-left: 4px solid #d69e2e;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 10px 10px 0;
-        }
-        
-        .error-box {
-            background: #fed7d7;
-            border-left: 4px solid #e53e3e;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 10px 10px 0;
-        }
-        
-        .login-form {
-            text-align: left;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #4a5568;
-        }
-        
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-        
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .error {
-            color: #e53e3e;
-            background: #fed7d7;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .checkpoint-info {
-            text-align: left;
-            margin: 20px 0;
-        }
-        
-        .checkpoint-info ul {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .checkpoint-info li {
-            padding: 8px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .checkpoint-info li:last-child {
-            border-bottom: none;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-active {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        
-        .status-expired {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .card {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-            
-            .btn {
-                padding: 12px 24px;
-                font-size: 14px;
-            }
-        }
-        
-        /* Loading animation */
-        .loading {
+        .loading-spinner {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
         }
         
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
         
-        /* Dashboard specific styles */
-        .dashboard-container {
-            max-width: 1200px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
+        .key-display {
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            word-break: break-all;
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
         }
         
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
-            color: #718096;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        th {
-            background: #f7fafc;
-            font-weight: 600;
-            color: #4a5568;
-        }
-        
-        tr:hover {
-            background: #f7fafc;
-        }
-        
-        .pagination {
+        .checkpoint-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            margin-top: 20px;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
         }
         
-        .pagination a {
-            padding: 8px 12px;
-            margin: 0 4px;
-            text-decoration: none;
-            border-radius: 5px;
-            background: white;
-            color: #667eea;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .pagination a:hover {
-            background: #667eea;
-            color: white;
-        }
-        
-        .pagination .current {
-            background: #667eea;
-            color: white;
+        .completed-badge {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%) !important;
         }
     </style>
 </head>
 <body>
-    <%- body %>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-key me-2"></i>Key System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/checkpoint/1">
+                            <i class="fas fa-flag-checkered me-1"></i>Checkpoints
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/access">
+                            <i class="fas fa-unlock me-1"></i>Access
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <%- body %>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 text-center text-white-custom">
+        <div class="container">
+            <hr style="border-color: rgba(255, 255, 255, 0.2);">
+            <p class="mb-0">
+                <i class="fas fa-shield-alt me-2"></i>
+                Secure Key Management System &copy; <%= new Date().getFullYear() %>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Common JavaScript Functions -->
     <script>
-        // Prevent manual navigation/redirection attempts
-        // Only allow Linkvertise redirects
-        let allowedRedirect = false;
-        
-        // Override window.location methods to prevent unauthorized redirects
-        const originalAssign = window.location.assign;
-        const originalReplace = window.location.replace;
-        
-        window.location.assign = function(url) {
-            if (allowedRedirect) {
-                originalAssign.call(this, url);
-            } else {
-                console.warn('Unauthorized redirect attempt blocked');
+        // Utility functions for the entire application
+        function showLoading(buttonElement) {
+            if (buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<span class="loading-spinner me-2"></span>Loading...';
             }
-        };
-        
-        window.location.replace = function(url) {
-            if (allowedRedirect) {
-                originalReplace.call(this, url);
-            } else {
-                console.warn('Unauthorized redirect attempt blocked');
-            }
-        };
-        
-        // Linkvertise integration will set allowedRedirect to true
-        window.addEventListener('beforeunload', function() {
-            allowedRedirect = true;
-        });
-        
-        // Auto-refresh timer for key expiration
-        function startExpirationTimer(expiresAt) {
-            const expirationTime = new Date(expiresAt);
-            
-            function updateTimer() {
-                const now = new Date();
-                const timeLeft = expirationTime - now;
-                
-                if (timeLeft <= 0) {
-                    // Key expired, reload page
-                    window.location.reload();
-                    return;
-                }
-                
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
-                const timerElement = document.querySelector('.timer-countdown');
-                if (timerElement) {
-                    timerElement.textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
-                }
-            }
-            
-            updateTimer();
-            setInterval(updateTimer, 1000);
         }
         
-        // Initialize timer if expiration data exists
-        const expirationMeta = document.querySelector('meta[name="key-expires"]');
-        if (expirationMeta) {
-            startExpirationTimer(expirationMeta.content);
+        function hideLoading(buttonElement, originalText) {
+            if (buttonElement) {
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalText;
+            }
         }
         
-        // Copy key to clipboard functionality
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                // Show success message
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                btn.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = '';
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy: ', err);
-                alert('Failed to copy key to clipboard');
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Copied to clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Failed to copy to clipboard', 'danger');
             });
         }
+        
+        // Check session status periodically
+        setInterval(() => {
+            fetch('/api/validate-session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success && window.location.pathname !== '/checkpoint/1') {
+                        showAlert('Session expired. Redirecting to checkpoint 1...', 'warning');
+                        setTimeout(() => {
+                            window.location.href = '/checkpoint/1';
+                        }, 2000);
+                    }
+                })
+                .catch(() => {
+                    // Silently fail - network issues shouldn't interrupt user experience
+                });
+        }, 300000); // Check every 5 minutes
     </script>
 </body>
 </html>

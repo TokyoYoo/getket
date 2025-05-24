@@ -76,52 +76,6 @@
             gap: 1rem;
         }
         
-        /* Test Controls Section */
-        .test-controls {
-            background: rgba(255, 193, 7, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-        }
-        
-        .test-controls h3 {
-            color: #fbbf24;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .test-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-        
-        .test-option {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .test-option label {
-            font-size: 0.9rem;
-            color: #fbbf24;
-            font-weight: 500;
-        }
-        
-        .test-option select {
-            padding: 0.5rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            font-size: 0.9rem;
-        }
-        
         .btn {
             padding: 0.7rem 1.5rem;
             border: none;
@@ -145,11 +99,6 @@
         
         .btn-success {
             background: linear-gradient(45deg, #10b981, #059669);
-            color: white;
-        }
-        
-        .btn-warning {
-            background: linear-gradient(45deg, #f59e0b, #d97706);
             color: white;
         }
         
@@ -228,10 +177,6 @@
             color: #fbbf24;
         }
         
-        .time-remaining.expired {
-            color: #ef4444;
-        }
-        
         .delete-btn {
             background: linear-gradient(45deg, #ef4444, #dc2626);
             color: white;
@@ -278,74 +223,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-        }
-        
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            margin: 5% auto;
-            padding: 2rem;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .modal-header h3 {
-            color: #fbbf24;
-            font-size: 1.3rem;
-        }
-        
-        .close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: white;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #fbbf24;
-            font-weight: 500;
-        }
-        
-        .form-group select {
-            width: 100%;
-            padding: 0.7rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            font-size: 1rem;
-        }
-        
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -354,10 +231,6 @@
             .controls {
                 flex-direction: column;
                 align-items: stretch;
-            }
-            
-            .test-grid {
-                grid-template-columns: 1fr;
             }
             
             .keys-table {
@@ -389,31 +262,6 @@
         <div class="stat-card expired">
             <div class="stat-number" id="expiredKeys"><%= stats.expired %></div>
             <div class="stat-label">Expired Keys</div>
-        </div>
-    </div>
-    
-    <!-- Test Controls Section -->
-    <div class="test-controls">
-        <h3>🧪 Testing Tools</h3>
-        <div class="test-grid">
-            <div class="test-option">
-                <label>Quick Expire Test:</label>
-                <select id="quickExpireSelect">
-                    <option value="">Select expire time...</option>
-                    <option value="30">30 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="120">2 minutes</option>
-                    <option value="300">5 minutes</option>
-                </select>
-            </div>
-            <div class="test-option">
-                <label>Bulk Actions:</label>
-                <button class="btn btn-warning" onclick="createTestKeys()">Create Test Keys</button>
-            </div>
-            <div class="test-option">
-                <label>Mass Update:</label>
-                <button class="btn btn-warning" onclick="openMassExpireModal()">Set Mass Expire</button>
-            </div>
         </div>
     </div>
     
@@ -464,7 +312,7 @@
                             <td><%= key.ipAddress %></td>
                             <td><span class="status-badge status-active">Active</span></td>
                             <td>
-                                <button class="delete-btn" onclick="deleteKey('<%= key._id %>', '<%= key.sessionId %>')">Delete</button>
+                                <button class="delete-btn" onclick="deleteKey('<%= key._id %>')">Delete</button>
                             </td>
                         </tr>
                     <% }); %>
@@ -503,7 +351,7 @@
                             <td><%= key.ipAddress %></td>
                             <td><span class="status-badge status-expired">Expired</span></td>
                             <td>
-                                <button class="delete-btn" onclick="deleteKey('<%= key._id %>', '<%= key.sessionId %>')">Delete</button>
+                                <button class="delete-btn" onclick="deleteKey('<%= key._id %>')">Delete</button>
                             </td>
                         </tr>
                     <% }); %>
@@ -512,50 +360,22 @@
         <% } %>
     </div>
     
-    <!-- Mass Update Modal -->
-    <div id="massExpireModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>⏰ Mass Update Expiration</h3>
-                <span class="close" onclick="closeMassExpireModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>Set expiration for all active keys:</label>
-                <select id="massExpireTime">
-                    <option value="30">30 seconds</option>
-                    <option value="60">1 minute</option>
-                    <option value="120">2 minutes</option>
-                    <option value="300">5 minutes</option>
-                    <option value="600">10 minutes</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <button class="btn btn-warning" onclick="massUpdateExpiration()">Update All</button>
-                <button class="btn btn-primary" onclick="closeMassExpireModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-    
     <script>
-        // Delete key and associated session
-        async function deleteKey(keyId, sessionId) {
-            if (!confirm('Are you sure you want to delete this key? This will also invalidate the user session.')) {
+        // Delete key
+        async function deleteKey(keyId) {
+            if (!confirm('Are you sure you want to delete this key?')) {
                 return;
             }
             
             try {
                 const response = await fetch(`/dashboard/delete/${keyId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ sessionId: sessionId })
+                    method: 'POST'
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage('Key and session deleted successfully', 'success');
+                    showMessage('Key deleted successfully', 'success');
                     refreshDashboard();
                 } else {
                     showMessage('Error deleting key: ' + data.message, 'error');
@@ -587,82 +407,6 @@
                 }
             } catch (error) {
                 showMessage('Error cleaning expired keys', 'error');
-                console.error(error);
-            }
-        }
-        
-        // Create test keys with quick expiration
-        async function createTestKeys() {
-            const expireTime = document.getElementById('quickExpireSelect').value;
-            if (!expireTime) {
-                showMessage('Please select an expiration time first', 'error');
-                return;
-            }
-            
-            if (!confirm(`Create 3 test keys that will expire in ${expireTime} seconds?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/dashboard/create-test-keys', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ expireSeconds: parseInt(expireTime) })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage(data.message, 'success');
-                    refreshDashboard();
-                } else {
-                    showMessage('Error creating test keys: ' + data.message, 'error');
-                }
-            } catch (error) {
-                showMessage('Error creating test keys', 'error');
-                console.error(error);
-            }
-        }
-        
-        // Modal functions
-        function openMassExpireModal() {
-            document.getElementById('massExpireModal').style.display = 'block';
-        }
-        
-        function closeMassExpireModal() {
-            document.getElementById('massExpireModal').style.display = 'none';
-        }
-        
-        // Mass update expiration
-        async function massUpdateExpiration() {
-            const expireTime = document.getElementById('massExpireTime').value;
-            
-            if (!confirm(`Set all active keys to expire in ${expireTime} seconds?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/dashboard/mass-update-expiration', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ expireSeconds: parseInt(expireTime) })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showMessage(data.message, 'success');
-                    closeMassExpireModal();
-                    refreshDashboard();
-                } else {
-                    showMessage('Error updating expiration: ' + data.message, 'error');
-                }
-            } catch (error) {
-                showMessage('Error updating expiration', 'error');
                 console.error(error);
             }
         }
@@ -712,14 +456,6 @@
                 document.getElementById('expiredKeys').textContent = data.expired;
             } catch (error) {
                 console.error('Error updating stats:', error);
-            }
-        }
-        
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('massExpireModal');
-            if (event.target == modal) {
-                closeMassExpireModal();
             }
         }
         
