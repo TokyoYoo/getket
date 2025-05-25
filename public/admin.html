@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Key Manager - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .search-box {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-left: auto;
+            width: 300px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.used {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .key-text {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .hwid {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 Key Manager</h1>
+            <p>Admin Dashboard</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalKeys">0</div>
+                <div class="stat-label">Total Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeKeys">0</div>
+                <div class="stat-label">Active Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="usedKeys">0</div>
+                <div class="stat-label">Used Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="expiredKeys">0</div>
+                <div class="stat-label">Expired Keys</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+            <button class="btn btn-danger" onclick="cleanupExpired()">🗑️ Cleanup Expired</button>
+            <input type="text" class="search-box" id="searchBox" placeholder="Search keys..." onkeyup="filterKeys()">
+        </div>
+        
+        <div class="table-container">
+            <div class="loading" id="loading">
+                Loading keys...
+            </div>
+            
+            <table id="keysTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Status</th>
+                        <th>HWID</th>
+                        <th>Created</th>
+                        <th>Expires</th>
+                        <th>First Used</th>
+                        <th>Last Used</th>
+                    </tr>
+                </thead>
+                <tbody id="keysTableBody">
+                </tbody>
+            </table>
+            
+            <div class="empty" id="emptyState" style="display: none;">
+                No keys found
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allKeys = [];
+        
+        async function loadKeys() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('keysTable').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'none';
+                
+                const response = await fetch('/api/admin/keys');
+                const keys = await response.json();
+                
+                allKeys = keys;
+                updateStats(keys);
+                displayKeys(keys);
+                
+            } catch (error) {
+                console.error('Error loading keys:', error);
+                document.getElementById('loading').innerHTML = 'Error loading keys';
+            }
+        }
+        
+        function updateStats(keys) {
+            const now = new Date();
+            
+            const total = keys.length;
+            const active = keys.filter(k => k.isActive && new Date(k.expiresAt) > now).length;
+            const used = keys.filter(k => k.hwid).length;
+            const expired = keys.filter(k => new Date(k.expiresAt) <= now).length;
+            
+            document.getElementById('totalKeys').textContent = total;
+            document.getElementById('activeKeys').textContent = active;
+            document.getElementById('usedKeys').textContent = used;
+            document.getElementById('expiredKeys').textContent = expired;
+        }
+        
+        function displayKeys(keys) {
+            document.getElementById('loading').style.display = 'none';
+            
+            if (keys.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('keysTable').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('keysTable').style.display = 'table';
+            document.getElementById('emptyState').style.display = 'none';
+            
+            const tbody = document.getElementById('keysTableBody');
+            tbody.innerHTML = '';
+            
+            keys.forEach(key => {
+                const row = document.createElement('tr');
+                
+                const now = new Date();
+                const isExpired = new Date(key.expiresAt) <= now;
+                const isUsed = !!key.hwid;
+                
+                let status = 'active';
+                let statusText = 'Active';
+                
+                if (isExpired) {
+                    status = 'expired';
+                    statusText = 'Expired';
+                } else if (isUsed) {
+                    status = 'used';
+                    statusText = 'Used';
+                }
+                
+                row.innerHTML = `
+                    <td><span class="key-text">${key.key}</span></td>
+                    <td><span class="status ${status}">${statusText}</span></td>
+                    <td><span class="hwid">${key.hwid || 'Not bound'}</span></td>
+                    <td>${formatDate(key.createdAt)}</td>
+                    <td>${formatDate(key.expiresAt)}</td>
+                    <td>${key.firstUsedAt ? formatDate(key.firstUsedAt) : '-'}</td>
+                    <td>${key.lastUsedAt ? formatDate(key.lastUsedAt) : '-'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+        
+        function filterKeys() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            const filteredKeys = allKeys.filter(key => 
+                key.key.toLowerCase().includes(searchTerm) ||
+                (key.hwid && key.hwid.toLowerCase().includes(searchTerm))
+            );
+            
+            displayKeys(filteredKeys);
+        }
+        
+        function refreshData() {
+            loadKeys();
+        }
+        
+        async function cleanupExpired() {
+            if (!confirm('Are you sure you want to delete all expired keys?')) {
+                return;
+            }
+            
+            try {
+                // This would need to be implemented as an API endpoint
+                alert('Cleanup functionality would be implemented here');
+                
+            } catch (error) {
+                console.error('Error cleaning up:', error);
+                alert('Error during cleanup');
+            }
+        }
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadKeys);
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadKeys, 30000);
+    </script>
+</body>
+</html>

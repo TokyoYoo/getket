@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetKey System - Generate Your Key</title>
+    <script src="https://publisher.linkvertise.com/cdn/linkvertise.js"></script>
+    <script>
+        linkvertise(572754, {
+            whitelist: [],
+            blacklist: [""]
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            height: 30px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .checkpoint-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .checkpoint {
+            flex: 1;
+            padding: 10px;
+            margin: 0 5px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .checkpoint.completed {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4caf50;
+        }
+        
+        .checkpoint.pending {
+            background: rgba(255, 193, 7, 0.3);
+            border: 2px solid #ffc107;
+        }
+        
+        .checkpoint.locked {
+            background: rgba(158, 158, 158, 0.3);
+            border: 2px solid #9e9e9e;
+        }
+        
+        .action-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .key-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .key-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            margin: 15px 0;
+            word-break: break-all;
+            border: 2px solid #4ecdc4;
+        }
+        
+        .key-info {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">GetKey System</h1>
+        <p class="subtitle">Complete 3 checkpoints to generate your key</p>
+        
+        <div class="progress">
+            <div class="progress-title">Progress: <span id="current-step">0</span>/3</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%">
+                    <span id="progress-text">0%</span>
+                </div>
+            </div>
+            
+            <div class="checkpoint-status">
+                <div class="checkpoint locked" id="checkpoint-1">
+                    <div>Checkpoint 1</div>
+                    <div>🔒</div>
+                </div>
+                <div class="checkpoint locked" id="checkpoint-2">
+                    <div>Checkpoint 2</div>
+                    <div>🔒</div>
+                </div>
+                <div class="checkpoint locked" id="checkpoint-3">
+                    <div>Checkpoint 3</div>
+                    <div>🔒</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="next-section">
+            <a href="#" class="action-button" id="next-button">▶ NEXT</a>
+        </div>
+        
+        <div id="create-key-section" style="display: none;">
+            <button class="action-button" id="create-key-button">🔑 CREATE A NEW KEY</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+        
+        <div class="key-section" id="key-section" style="display: none;">
+            <h3>Your Generated Key:</h3>
+            <div class="key-display" id="key-display"></div>
+            <div class="key-info">
+                ⏱️ This key will expire in 24 hours<br>
+                💾 Save this key securely
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = '';
+        let currentPhase = 0;
+        
+        // Get session from URL or create new one
+        const urlParams = new URLSearchParams(window.location.search);
+        sessionId = urlParams.get('session') || '';
+        
+        async function initializeSession() {
+            try {
+                const response = await fetch('/api/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                
+                const data = await response.json();
+                sessionId = data.sessionId;
+                
+                // Update URL without refresh
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('session', sessionId);
+                window.history.replaceState({}, '', newUrl);
+                
+                updateUI(data.session);
+            } catch (error) {
+                console.error('Session initialization error:', error);
+            }
+        }
+        
+        function updateUI(session) {
+            const phases = ['phase1', 'phase2', 'phase3'];
+            let completedCount = 0;
+            
+            phases.forEach((phase, index) => {
+                const checkpoint = document.getElementById(`checkpoint-${index + 1}`);
+                if (session[phase]) {
+                    checkpoint.className = 'checkpoint completed';
+                    checkpoint.innerHTML = `<div>Checkpoint ${index + 1}</div><div>✅</div>`;
+                    completedCount++;
+                } else if (completedCount === index) {
+                    checkpoint.className = 'checkpoint pending';
+                    checkpoint.innerHTML = `<div>Checkpoint ${index + 1}</div><div>⏳</div>`;
+                } else {
+                    checkpoint.className = 'checkpoint locked';
+                    checkpoint.innerHTML = `<div>Checkpoint ${index + 1}</div><div>🔒</div>`;
+                }
+            });
+            
+            currentPhase = completedCount;
+            const progressPercent = Math.round((completedCount / 3) * 100);
+            
+            document.getElementById('current-step').textContent = completedCount;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+            document.getElementById('progress-text').textContent = progressPercent + '%';
+            
+            // Update next button
+            const nextButton = document.getElementById('next-button');
+            const nextSection = document.getElementById('next-section');
+            const createKeySection = document.getElementById('create-key-section');
+            
+            if (completedCount < 3) {
+                nextButton.href = `/check${completedCount + 1}?session=${sessionId}`;
+                nextSection.style.display = 'block';
+                createKeySection.style.display = 'none';
+            } else {
+                nextSection.style.display = 'none';
+                createKeySection.style.display = 'block';
+            }
+            
+            // Show existing key if available
+            if (session.key) {
+                document.getElementById('key-display').textContent = session.key;
+                document.getElementById('key-section').style.display = 'block';
+                createKeySection.style.display = 'none';
+            }
+        }
+        
+        document.getElementById('create-key-button').addEventListener('click', async () => {
+            const loading = document.getElementById('loading');
+            const button = document.getElementById('create-key-button');
+            
+            loading.style.display = 'block';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/create_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('key-display').textContent = data.key;
+                    document.getElementById('key-section').style.display = 'block';
+                    document.getElementById('create-key-section').style.display = 'none';
+                } else {
+                    alert('Error: ' + data.message);
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Key creation error:', error);
+                alert('Failed to create key. Please try again.');
+                button.disabled = false;
+            }
+            
+            loading.style.display = 'none';
+        });
+        
+        // Initialize on page load
+        initializeSession();
+        
+        // Auto-refresh every 5 seconds to check for updates
+        setInterval(() => {
+            if (currentPhase < 3) {
+                initializeSession();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
