@@ -3,6 +3,18 @@ const { getDB } = require('../db/connection');
 const { generateKey, getBrowserFingerprint } = require('../utils/generateKey');
 const router = express.Router();
 
+// Function to get key expiration hours from settings
+async function getKeyExpirationHours() {
+    try {
+        const db = getDB();
+        const settingsCollection = db.collection('settings');
+        const settings = await settingsCollection.findOne({ _id: 'admin_settings' });
+        return settings?.keyExpirationHours || 24;
+    } catch (error) {
+        return 24; // Default fallback
+    }
+}
+
 router.post('/', async (req, res) => {
     try {
         const { sessionId } = req.body;
@@ -35,15 +47,18 @@ router.post('/', async (req, res) => {
             return res.json({ success: false, message: 'All checkpoints must be completed first' });
         }
         
-        // Check if key already exists
-        if (session.key) {
+        // Check if key already exists and is not expired
+        if (session.key && session.keyExpiresAt && session.keyExpiresAt > new Date()) {
             return res.json({ success: true, key: session.key });
         }
+        
+        // Get dynamic expiration hours from admin settings
+        const expirationHours = await getKeyExpirationHours();
         
         // Generate new key
         const newKey = generateKey();
         const keyCreatedAt = new Date();
-        const keyExpiresAt = new Date(keyCreatedAt.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+        const keyExpiresAt = new Date(keyCreatedAt.getTime() + expirationHours * 60 * 60 * 1000);
         
         // Update session with key and sync fingerprint
         await sessionsCollection.updateOne(
@@ -60,7 +75,12 @@ router.post('/', async (req, res) => {
             }
         );
         
-        res.json({ success: true, key: newKey });
+        res.json({ 
+            success: true, 
+            key: newKey,
+            expiresAt: keyExpiresAt,
+            expirationHours: expirationHours
+        });
         
     } catch (error) {
         console.error('Create key error:', error);
